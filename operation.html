@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>縮約結果</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #ffe4e1;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        #summaryRate {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        #targetRate {
+            font-size: 1rem;
+            font-weight: normal;
+            color: #555;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            align-items: flex-start; /* 上端を揃える */
+        }
+
+        .column {
+            flex: 1;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            background-color: #fff;
+            word-wrap: break-word;
+            box-sizing: border-box;
+        }
+
+        .highlight {
+            background-color: turquoise;
+        }
+
+        .output-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px; /* タイトル下のマージンを統一 */
+        }
+
+        .output-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .copyButton {
+            margin-left: 10px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #007bff;
+        }
+
+        .copyButton:hover {
+            color: #0056b3;
+        }
+
+        .output, #leftColumn {
+            font-size: 1rem;
+            padding: 10px;
+            white-space: pre-wrap;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            min-height: 150px;
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div id="summaryRate">現在の縮約率: 0.00%</div>
+    <div id="targetRate"></div>
+    <div class="container">
+        <div class="column">
+            <div class="output-wrapper">
+                <h2 class="output-title">縮約に使う文字をハイライト</h2>
+            </div>
+            <div id="leftColumn" contenteditable="false">
+                <!-- テキストがここに表示されます -->
+            </div>
+        </div>
+        <div class="column">
+            <div class="output-wrapper">
+                <h2 class="output-title">縮約後のテキスト</h2>
+                <button class="copyButton" onclick="copyToClipboard()">📋</button>
+            </div>
+            <div class="output" id="highlightedText"></div>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const inputText = urlParams.get('text');
+        const targetRateValue = urlParams.get('targetRate');
+
+        const originalTextLength = inputText ? inputText.replace(/\s+/g, '').length : 0;
+
+        const leftColumn = document.getElementById('leftColumn');
+        if (inputText) {
+            leftColumn.textContent = inputText;
+        } else {
+            leftColumn.innerHTML = '<p>テキストがありません。</p>';
+        }
+
+        const targetRate = document.getElementById('targetRate');
+        if (targetRateValue) {
+            targetRate.textContent = `目標の縮約率: ${targetRateValue}%`;
+        }
+
+        const highlightedText = document.getElementById('highlightedText');
+        const summaryRate = document.getElementById('summaryRate');
+
+        leftColumn.addEventListener('mouseup', () => {
+            const selection = window.getSelection();
+            if (!selection.rangeCount || !selection.toString().trim()) return;
+
+            const range = selection.getRangeAt(0);
+
+            if (isMixedSelection(range)) {
+                selection.removeAllRanges();
+                return;
+            }
+
+            const parentNode = range.startContainer.parentNode;
+
+            if (parentNode.classList && parentNode.classList.contains('highlight')) {
+                partialUnhighlight(range, parentNode);
+            } else {
+                safeHighlight(range);
+            }
+
+            updateHighlightedText();
+            updateSummaryRate();
+            selection.removeAllRanges();
+        });
+
+        function isMixedSelection(range) {
+            const nodes = getNodesInRange(range);
+            let hasHighlighted = false;
+            let hasUnhighlighted = false;
+
+            nodes.forEach((node) => {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    const parent = node.parentNode;
+                    if (parent.classList && parent.classList.contains('highlight')) {
+                        hasHighlighted = true;
+                    } else {
+                        hasUnhighlighted = true;
+                    }
+                }
+            });
+
+            return hasHighlighted && hasUnhighlighted;
+        }
+
+        function getNodesInRange(range) {
+            const nodes = [];
+            const treeWalker = document.createTreeWalker(
+                range.commonAncestorContainer,
+                NodeFilter.SHOW_TEXT,
+                {
+                    acceptNode(node) {
+                        const nodeRange = document.createRange();
+                        nodeRange.selectNodeContents(node);
+                        return range.intersectsNode(node)
+                            ? NodeFilter.FILTER_ACCEPT
+                            : NodeFilter.FILTER_REJECT;
+                    },
+                }
+            );
+            while (treeWalker.nextNode()) {
+                nodes.push(treeWalker.currentNode);
+            }
+            return nodes;
+        }
+
+        function safeHighlight(range) {
+            const startNode = range.startContainer;
+            const endNode = range.endContainer;
+
+            if (startNode.parentNode.classList && startNode.parentNode.classList.contains('highlight')) {
+                splitHighlight(startNode.parentNode, range.startOffset);
+            }
+            if (endNode.parentNode.classList && endNode.parentNode.classList.contains('highlight')) {
+                splitHighlight(endNode.parentNode, range.endOffset);
+            }
+
+            applyHighlight(range);
+        }
+
+        function splitHighlight(node, offset) {
+            const text = node.textContent;
+            const before = text.slice(0, offset);
+            const after = text.slice(offset);
+
+            const beforeSpan = document.createElement('span');
+            beforeSpan.className = 'highlight';
+            beforeSpan.textContent = before;
+
+            const afterSpan = document.createElement('span');
+            afterSpan.className = 'highlight';
+            afterSpan.textContent = after;
+
+            node.replaceWith(beforeSpan, afterSpan);
+        }
+
+        function applyHighlight(range) {
+            const span = document.createElement('span');
+            span.className = 'highlight';
+            span.textContent = range.toString();
+            range.deleteContents();
+            range.insertNode(span);
+        }
+
+        function partialUnhighlight(range, highlightNode) {
+            const fragment = document.createDocumentFragment();
+            const fullText = highlightNode.textContent;
+            const startOffset = range.startOffset;
+            const endOffset = range.endOffset;
+
+            if (startOffset > 0) {
+                const before = document.createElement('span');
+                before.className = 'highlight';
+                before.textContent = fullText.slice(0, startOffset);
+                fragment.appendChild(before);
+            }
+
+            fragment.appendChild(document.createTextNode(fullText.slice(startOffset, endOffset)));
+
+            if (endOffset < fullText.length) {
+                const after = document.createElement('span');
+                after.className = 'highlight';
+                after.textContent = fullText.slice(endOffset);
+                fragment.appendChild(after);
+            }
+
+            highlightNode.replaceWith(fragment);
+        }
+
+        function updateHighlightedText() {
+            const highlights = leftColumn.querySelectorAll('.highlight');
+            const selectedText = Array.from(highlights)
+                .map(span => span.textContent)
+                .join('');
+            highlightedText.textContent = selectedText;
+        }
+
+        function updateSummaryRate() {
+            const highlights = leftColumn.querySelectorAll('.highlight');
+            const highlightedLength = Array.from(highlights)
+                .map(span => span.textContent.replace(/\s+/g, '').length)
+                .reduce((sum, len) => sum + len, 0);
+
+            const summaryPercentage = originalTextLength > 0
+                ? ((highlightedLength / originalTextLength) * 100).toFixed(2)
+                : 0;
+
+            summaryRate.textContent = `現在の縮約率: ${summaryPercentage}%`;
+
+            // 目標範囲内の判定
+            if (targetRateValue) {
+                const targetRateNum = parseFloat(targetRateValue);
+                const lowerBound = targetRateNum - 5;
+                const upperBound = targetRateNum + 5;
+
+                if (summaryPercentage >= lowerBound && summaryPercentage <= upperBound) {
+                    summaryRate.style.color = 'deeppink';
+                } else {
+                    summaryRate.style.color = '#333'; // 元の色に戻す
+                }
+            }
+        }
+
+        function copyToClipboard() {
+            const text = document.getElementById('highlightedText').textContent;
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    Swal.fire({
+                        text: 'クリップボードにコピーしました。',
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    });
+                })
+                .catch(() => {
+                    Swal.fire({
+                        text: 'コピーに失敗しました。',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                });
+        }
+    </script>
+</body>
+</html>

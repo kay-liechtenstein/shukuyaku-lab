@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>縮約bot β</title>
+    <link href="https://fonts.googleapis.com/css2?family=Yusei+Magic&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            height: 100vh;
+            background-color: #ffe4e1;
+        }
+
+        .container {
+            text-align: center;
+            margin-top: 1px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 3rem;
+            color: #333;
+            font-family: 'Sawarabi Mincho', serif;
+        }
+
+        .textarea-box {
+            width: 60vw;
+            height: 500px;
+            font-size: 1.0rem;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: both;
+        }
+
+        .input-box {
+            width: 30%;
+            font-size: 1.0rem;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            color: white;
+            background: linear-gradient(45deg, #ff7eb3, #ff467e);
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            transform: scale(1.1);
+            box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: scale(1.05);
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #555;
+            margin-top: 30px;
+            padding-bottom: 10px;
+        }
+
+        .footer a {
+            text-decoration: none;
+            color: #555;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>縮約bot β</h1>
+        <textarea class="textarea-box" id="inputText" placeholder="縮約前の元テキスト" rows="10"></textarea>
+        <input class="input-box" id="targetRate" type="number" placeholder="目標の縮約率（%・整数・半角）" />
+        <br>
+        <button id="startButton">縮約を開始する</button>
+    </div>
+
+    <div class="footer">
+        &copy; 2025 Koichi Akashi
+    </div>
+
+    <script>
+        document.getElementById('startButton').addEventListener('click', function () {
+            const inputText = document.getElementById('inputText').value.trim();
+            const targetRate = document.getElementById('targetRate').value.trim();
+
+            if (!inputText) {
+                Swal.fire({
+                    title: '',
+                    html: '何でもいいのでテキストを入力してください...',
+                    icon: 'warning',
+                    confirmButtonText: 'OK',
+                    customClass: 'swal-wide'
+                });
+                return;
+            }
+
+            if (inputText.length > 5000) {
+                Swal.fire({
+                    title: '',
+                    html: '文字数はせいぜい5000文字以下にしてください...',
+                    icon: 'warning',
+                    confirmButtonText: 'OK',
+                    customClass: 'swal-wide'
+                });
+                return;
+            }
+
+
+            if (!targetRate || isNaN(targetRate)) {
+                Swal.fire({
+                    title: '',
+                    html: '目標の縮約率を入力してください...',
+                    icon: 'warning',
+                    confirmButtonText: 'OK',
+                    customClass: 'swal-wide'
+                });
+                return;
+            }
+
+
+            if (targetRate <= 0 || targetRate >= 100) {
+                Swal.fire({
+                    title: '',
+                    html: '目標の縮約率でそんな値は有り得ないですよ...',
+                    icon: 'warning',
+                    confirmButtonText: 'OK',
+                    customClass: 'swal-wide'
+                });
+                return;
+            }
+
+            const encodedText = encodeURIComponent(inputText);
+            const operationURL = `operation.html?text=${encodedText}&targetRate=${targetRate}`;
+
+            window.open(operationURL, '_blank');
+        });
+    </script>
+</body>
+</html>
