@@ -38,7 +38,7 @@
             display: flex;
             gap: 20px;
             width: 100%;
-            align-items: flex-start; /* 上端を揃える */
+            align-items: flex-start;
         }
 
         .column {
@@ -59,7 +59,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 15px; /* タイトル下のマージンを統一 */
+            margin-bottom: 15px;
         }
 
         .output-title {
@@ -152,7 +152,11 @@
             const parentNode = range.startContainer.parentNode;
 
             if (parentNode.classList && parentNode.classList.contains('highlight')) {
-                partialUnhighlight(range, parentNode);
+                if (range.startContainer === range.endContainer) {
+                    partialUnhighlightWithinSingleNode(range, parentNode);
+                } else {
+                    partialUnhighlight(range);
+                }
             } else {
                 safeHighlight(range);
             }
@@ -168,7 +172,7 @@
             let hasUnhighlighted = false;
 
             nodes.forEach((node) => {
-                if (node.nodeType === Node.TEXT_NODE) {
+                if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '') {
                     const parent = node.parentNode;
                     if (parent.classList && parent.classList.contains('highlight')) {
                         hasHighlighted = true;
@@ -188,11 +192,10 @@
                 NodeFilter.SHOW_TEXT,
                 {
                     acceptNode(node) {
+                        if (node.textContent.trim() === '') return NodeFilter.FILTER_REJECT;
                         const nodeRange = document.createRange();
                         nodeRange.selectNodeContents(node);
-                        return range.intersectsNode(node)
-                            ? NodeFilter.FILTER_ACCEPT
-                            : NodeFilter.FILTER_REJECT;
+                        return range.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
                     },
                 }
             );
@@ -240,7 +243,7 @@
             range.insertNode(span);
         }
 
-        function partialUnhighlight(range, highlightNode) {
+        function partialUnhighlightWithinSingleNode(range, highlightNode) {
             const fragment = document.createDocumentFragment();
             const fullText = highlightNode.textContent;
             const startOffset = range.startOffset;
@@ -265,6 +268,40 @@
             highlightNode.replaceWith(fragment);
         }
 
+        function partialUnhighlight(range) {
+            const nodes = getNodesInRange(range);
+
+            nodes.forEach((node) => {
+                const parent = node.parentNode;
+
+                if (parent.classList && parent.classList.contains('highlight')) {
+                    const fullText = parent.textContent;
+                    const startOffset = node === range.startContainer ? range.startOffset : 0;
+                    const endOffset = node === range.endContainer ? range.endOffset : node.textContent.length;
+
+                    const fragment = document.createDocumentFragment();
+
+                    if (startOffset > 0) {
+                        const before = document.createElement('span');
+                        before.className = 'highlight';
+                        before.textContent = fullText.slice(0, startOffset);
+                        fragment.appendChild(before);
+                    }
+
+                    fragment.appendChild(document.createTextNode(fullText.slice(startOffset, endOffset)));
+
+                    if (endOffset < fullText.length) {
+                        const after = document.createElement('span');
+                        after.className = 'highlight';
+                        after.textContent = fullText.slice(endOffset);
+                        fragment.appendChild(after);
+                    }
+
+                    parent.replaceWith(fragment);
+                }
+            });
+        }
+
         function updateHighlightedText() {
             const highlights = leftColumn.querySelectorAll('.highlight');
             const selectedText = Array.from(highlights)
@@ -285,17 +322,12 @@
 
             summaryRate.textContent = `現在の縮約率: ${summaryPercentage}%`;
 
-            // 目標範囲内の判定
             if (targetRateValue) {
                 const targetRateNum = parseFloat(targetRateValue);
                 const lowerBound = targetRateNum - 5;
                 const upperBound = targetRateNum + 5;
 
-                if (summaryPercentage >= lowerBound && summaryPercentage <= upperBound) {
-                    summaryRate.style.color = 'deeppink';
-                } else {
-                    summaryRate.style.color = '#333'; // 元の色に戻す
-                }
+                summaryRate.style.color = summaryPercentage >= lowerBound && summaryPercentage <= upperBound ? 'deeppink' : '#333';
             }
         }
 
