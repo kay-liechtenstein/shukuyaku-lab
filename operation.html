@@ -118,8 +118,8 @@
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
-        const inputText = urlParams.get('text');
-        const targetRateValue = urlParams.get('targetRate');
+            const inputText = sessionStorage.getItem('inputText');
+            const targetRateValue = sessionStorage.getItem('targetRate');
 
         const originalTextLength = inputText ? inputText.replace(/\s+/g, '').length : 0;
 

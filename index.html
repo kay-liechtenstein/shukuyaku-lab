@@ -129,7 +129,6 @@
                 return;
             }
 
-
             if (!targetRate || isNaN(targetRate)) {
                 Swal.fire({
                     title: '',
@@ -140,7 +139,6 @@
                 });
                 return;
             }
-
 
             if (targetRate <= 0 || targetRate >= 100) {
                 Swal.fire({
@@ -153,10 +151,12 @@
                 return;
             }
 
-            const encodedText = encodeURIComponent(inputText);
-            const operationURL = `operation.html?text=${encodedText}&targetRate=${targetRate}`;
+            // sessionStorage にデータを保存
+            sessionStorage.setItem('inputText', inputText);
+            sessionStorage.setItem('targetRate', targetRate);
 
-            window.open(operationURL, '_blank');
+            // operation.html に遷移
+            window.open('operation.html', '_blank');
         });
     </script>
 </body>
