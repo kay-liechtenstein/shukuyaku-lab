@@ -14,11 +14,11 @@
             flex-direction: column;
             align-items: center;
             box-sizing: border-box;
-    height: 140vh;
-    background-image: url('bg1.jpg'); /* 画像を背景として設定 */
-    background-size: cover; /* 画像を全体にフィット */
-    background-position: center; /* 画像の中央揃え */
-    background-repeat: no-repeat; /* 繰り返しを無効化 */
+            height: 140vh;
+            background-image: url('bg1.jpg'); /* 画像を背景として設定 */
+            background-size: cover; /* 画像を全体にフィット */
+            background-position: center; /* 画像の中央揃え */
+            background-repeat: no-repeat; /* 繰り返しを無効化 */
         }
 
         #summaryRate {
@@ -107,8 +107,7 @@
                 <h2 class="output-title">縮約に使う文字をハイライト</h2>
             </div>
             <div id="leftColumn" contenteditable="false">
-                <!-- テキストがここに表示されます -->
-            </div>
+                </div>
         </div>
         <div class="column">
             <div class="output-wrapper">
@@ -121,216 +120,189 @@
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
-            const inputText = sessionStorage.getItem('inputText');
-            const targetRateValue = sessionStorage.getItem('targetRate');
+        const inputText = sessionStorage.getItem('inputText');
+        const targetRateValue = sessionStorage.getItem('targetRate');
 
-        const originalTextLength = inputText ? inputText.replace(/\s+/g, '').length : 0;
+        const originalText = inputText || '';
+        const originalTextLength = originalText.replace(/\s+/g, '').length;
 
         const leftColumn = document.getElementById('leftColumn');
-        if (inputText) {
-            leftColumn.textContent = inputText;
-        } else {
-            leftColumn.innerHTML = '<p>テキストがありません。</p>';
-        }
+        const targetRateDisplay = document.getElementById('targetRate');
+        const highlightedTextDisplay = document.getElementById('highlightedText');
+        const summaryRateDisplay = document.getElementById('summaryRate');
 
-        const targetRate = document.getElementById('targetRate');
+        // ハイライトの範囲を {start, end} オブジェクトの配列として格納
+        let highlightRanges = [];
+
         if (targetRateValue) {
-            targetRate.textContent = `目標の縮約率: ${targetRateValue}%`;
+            targetRateDisplay.textContent = `目標の縮約率: ${targetRateValue}%`;
         }
 
-        const highlightedText = document.getElementById('highlightedText');
-        const summaryRate = document.getElementById('summaryRate');
+        // DOMの選択範囲を文字インデックスに変換する関数
+        function getSelectionCharacterOffsetWithin(element) {
+            let start = 0;
+            let end = 0;
+            const selection = window.getSelection();
 
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const preSelectionRange = range.cloneRange();
+                preSelectionRange.selectNodeContents(element);
+                preSelectionRange.setEnd(range.startContainer, range.startOffset);
+                start = preSelectionRange.toString().length;
+                end = start + range.toString().length;
+            }
+            return { start, end };
+        }
+
+        // 選択に基づいてハイライトまたはハイライト解除を適用する関数
         leftColumn.addEventListener('mouseup', () => {
             const selection = window.getSelection();
-            if (!selection.rangeCount || !selection.toString().trim()) return;
-
-            const range = selection.getRangeAt(0);
-
-            if (isMixedSelection(range)) {
-                selection.removeAllRanges();
+            if (!selection.rangeCount || !selection.toString().trim()) {
                 return;
             }
 
-            const parentNode = range.startContainer.parentNode;
-
-            if (parentNode.classList && parentNode.classList.contains('highlight')) {
-                if (range.startContainer === range.endContainer) {
-                    partialUnhighlightWithinSingleNode(range, parentNode);
-                } else {
-                    partialUnhighlight(range);
-                }
-            } else {
-                safeHighlight(range);
+            const { start, end } = getSelectionCharacterOffsetWithin(leftColumn);
+            if (start === end) { // 実際にテキストが選択されていない場合
+                return;
             }
 
+            // 選択された範囲が既存のハイライト内に完全に含まれているかチェック
+            let isUnhighlight = false;
+            for (let i = 0; i < highlightRanges.length; i++) {
+                const hr = highlightRanges[i];
+                if (start >= hr.start && end <= hr.end) {
+                    isUnhighlight = true;
+                    break;
+                }
+            }
+
+            if (isUnhighlight) {
+                unhighlightSelection(start, end);
+            } else {
+                highlightSelection(start, end);
+            }
+
+            renderTextWithHighlights();
             updateHighlightedText();
             updateSummaryRate();
-            selection.removeAllRanges();
+            selection.removeAllRanges(); // 処理後に選択をクリア
         });
 
-        function isMixedSelection(range) {
-            const nodes = getNodesInRange(range);
-            let hasHighlighted = false;
-            let hasUnhighlighted = false;
+        function highlightSelection(newStart, newEnd) {
+            // 新しい範囲を追加し、すべての範囲を結合/ソートする
+            highlightRanges.push({ start: newStart, end: newEnd });
+            mergeAndSortHighlights();
+        }
 
-            nodes.forEach((node) => {
-                if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '') {
-                    const parent = node.parentNode;
-                    if (parent.classList && parent.classList.contains('highlight')) {
-                        hasHighlighted = true;
-                    } else {
-                        hasUnhighlighted = true;
-                    }
+        function unhighlightSelection(unStart, unEnd) {
+            let newHighlightRanges = [];
+            highlightRanges.forEach(hr => {
+                // ケース1: ハイライトされた範囲がハイライト解除範囲の完全に外側にある
+                if (hr.end <= unStart || hr.start >= unEnd) {
+                    newHighlightRanges.push(hr);
                 }
+                // ケース2: ハイライトされた範囲がハイライト解除範囲を完全に覆っている
+                else if (hr.start < unStart && hr.end > unEnd) {
+                    newHighlightRanges.push({ start: hr.start, end: unStart });
+                    newHighlightRanges.push({ start: unEnd, end: hr.end });
+                }
+                // ケース3: ハイライト解除範囲がハイライト内で始まり、外側に広がる
+                else if (hr.start < unStart && hr.end <= unEnd) {
+                    newHighlightRanges.push({ start: hr.start, end: unStart });
+                }
+                // ケース4: ハイライト解除範囲がハイライト内で終わり、以前に始まる
+                else if (hr.start >= unStart && hr.end > unEnd) {
+                    newHighlightRanges.push({ start: unEnd, end: hr.end });
+                }
+                // ケース5: ハイライトされた範囲がハイライト解除範囲内に完全に含まれている（削除する）
+                // このケースは、'hr'をnewHighlightRangesにプッシュしないことで暗黙的に処理される
+            });
+            highlightRanges = newHighlightRanges;
+            mergeAndSortHighlights(); // ハイライト解除後に再度結合
+        }
+
+        function mergeAndSortHighlights() {
+            if (highlightRanges.length === 0) {
+                return;
+            }
+
+            // 開始インデックスでソート
+            highlightRanges.sort((a, b) => a.start - b.start);
+
+            const merged = [];
+            let current = highlightRanges[0];
+
+            for (let i = 1; i < highlightRanges.length; i++) {
+                const next = highlightRanges[i];
+                // 現在の範囲が次の範囲と重複または隣接している場合、結合する
+                if (current.end >= next.start) {
+                    current.end = Math.max(current.end, next.end);
+                } else {
+                    merged.push(current);
+                    current = next;
+                }
+            }
+            merged.push(current); // 最後に結合された範囲を追加
+            highlightRanges = merged;
+        }
+
+        function renderTextWithHighlights() {
+            leftColumn.innerHTML = ''; // 既存のコンテンツをクリア
+            let currentIndex = 0;
+
+            if (!originalText) {
+                leftColumn.innerHTML = '<p>テキストがありません。</p>';
+                return;
+            }
+
+            highlightRanges.forEach(hr => {
+                // ハイライトの前にプレーンテキストを追加 (存在する場合)
+                if (hr.start > currentIndex) {
+                    leftColumn.appendChild(document.createTextNode(originalText.substring(currentIndex, hr.start)));
+                }
+
+                // ハイライトされたテキストを追加
+                const span = document.createElement('span');
+                span.className = 'highlight';
+                span.textContent = originalText.substring(hr.start, hr.end);
+                leftColumn.appendChild(span);
+
+                currentIndex = hr.end;
             });
 
-            return hasHighlighted && hasUnhighlighted;
-        }
-
-        function getNodesInRange(range) {
-            const nodes = [];
-            const treeWalker = document.createTreeWalker(
-                range.commonAncestorContainer,
-                NodeFilter.SHOW_TEXT,
-                {
-                    acceptNode(node) {
-                        if (node.textContent.trim() === '') return NodeFilter.FILTER_REJECT;
-                        const nodeRange = document.createRange();
-                        nodeRange.selectNodeContents(node);
-                        return range.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
-                    },
-                }
-            );
-            while (treeWalker.nextNode()) {
-                nodes.push(treeWalker.currentNode);
+            // 最後のハイライトの後に残っているプレーンテキストを追加
+            if (currentIndex < originalText.length) {
+                leftColumn.appendChild(document.createTextNode(originalText.substring(currentIndex)));
             }
-            return nodes;
-        }
-
-        function safeHighlight(range) {
-            const startNode = range.startContainer;
-            const endNode = range.endContainer;
-
-            if (startNode.parentNode.classList && startNode.parentNode.classList.contains('highlight')) {
-                splitHighlight(startNode.parentNode, range.startOffset);
-            }
-            if (endNode.parentNode.classList && endNode.parentNode.classList.contains('highlight')) {
-                splitHighlight(endNode.parentNode, range.endOffset);
-            }
-
-            applyHighlight(range);
-        }
-
-        function splitHighlight(node, offset) {
-            const text = node.textContent;
-            const before = text.slice(0, offset);
-            const after = text.slice(offset);
-
-            const beforeSpan = document.createElement('span');
-            beforeSpan.className = 'highlight';
-            beforeSpan.textContent = before;
-
-            const afterSpan = document.createElement('span');
-            afterSpan.className = 'highlight';
-            afterSpan.textContent = after;
-
-            node.replaceWith(beforeSpan, afterSpan);
-        }
-
-        function applyHighlight(range) {
-            const span = document.createElement('span');
-            span.className = 'highlight';
-            span.textContent = range.toString();
-            range.deleteContents();
-            range.insertNode(span);
-        }
-
-        function partialUnhighlightWithinSingleNode(range, highlightNode) {
-            const fragment = document.createDocumentFragment();
-            const fullText = highlightNode.textContent;
-            const startOffset = range.startOffset;
-            const endOffset = range.endOffset;
-
-            if (startOffset > 0) {
-                const before = document.createElement('span');
-                before.className = 'highlight';
-                before.textContent = fullText.slice(0, startOffset);
-                fragment.appendChild(before);
-            }
-
-            fragment.appendChild(document.createTextNode(fullText.slice(startOffset, endOffset)));
-
-            if (endOffset < fullText.length) {
-                const after = document.createElement('span');
-                after.className = 'highlight';
-                after.textContent = fullText.slice(endOffset);
-                fragment.appendChild(after);
-            }
-
-            highlightNode.replaceWith(fragment);
-        }
-
-        function partialUnhighlight(range) {
-            const nodes = getNodesInRange(range);
-
-            nodes.forEach((node) => {
-                const parent = node.parentNode;
-
-                if (parent.classList && parent.classList.contains('highlight')) {
-                    const fullText = parent.textContent;
-                    const startOffset = node === range.startContainer ? range.startOffset : 0;
-                    const endOffset = node === range.endContainer ? range.endOffset : node.textContent.length;
-
-                    const fragment = document.createDocumentFragment();
-
-                    if (startOffset > 0) {
-                        const before = document.createElement('span');
-                        before.className = 'highlight';
-                        before.textContent = fullText.slice(0, startOffset);
-                        fragment.appendChild(before);
-                    }
-
-                    fragment.appendChild(document.createTextNode(fullText.slice(startOffset, endOffset)));
-
-                    if (endOffset < fullText.length) {
-                        const after = document.createElement('span');
-                        after.className = 'highlight';
-                        after.textContent = fullText.slice(endOffset);
-                        fragment.appendChild(after);
-                    }
-
-                    parent.replaceWith(fragment);
-                }
-            });
         }
 
         function updateHighlightedText() {
-            const highlights = leftColumn.querySelectorAll('.highlight');
-            const selectedText = Array.from(highlights)
-                .map(span => span.textContent)
-                .join('');
-            highlightedText.textContent = selectedText;
+            let selectedChars = '';
+            highlightRanges.forEach(hr => {
+                selectedChars += originalText.substring(hr.start, hr.end);
+            });
+            highlightedTextDisplay.textContent = selectedChars;
         }
 
         function updateSummaryRate() {
-            const highlights = leftColumn.querySelectorAll('.highlight');
-            const highlightedLength = Array.from(highlights)
-                .map(span => span.textContent.replace(/\s+/g, '').length)
-                .reduce((sum, len) => sum + len, 0);
+            let highlightedLength = 0;
+            highlightRanges.forEach(hr => {
+                highlightedLength += originalText.substring(hr.start, hr.end).replace(/\s+/g, '').length;
+            });
 
             const summaryPercentage = originalTextLength > 0
                 ? ((highlightedLength / originalTextLength) * 100).toFixed(2)
                 : 0;
 
-            summaryRate.textContent = `現在の縮約率: ${summaryPercentage}%`;
+            summaryRateDisplay.textContent = `現在の縮約率: ${summaryPercentage}%`;
 
             if (targetRateValue) {
                 const targetRateNum = parseFloat(targetRateValue);
                 const lowerBound = targetRateNum - 5;
                 const upperBound = targetRateNum + 5;
 
-                summaryRate.style.color = summaryPercentage >= lowerBound && summaryPercentage <= upperBound ? 'deeppink' : '#333';
+                summaryRateDisplay.style.color = summaryPercentage >= lowerBound && summaryPercentage <= upperBound ? 'deeppink' : '#333';
             }
         }
 
@@ -352,6 +324,11 @@
                     });
                 });
         }
+
+        // 初期表示と更新
+        renderTextWithHighlights();
+        updateHighlightedText();
+        updateSummaryRate();
     </script>
 </body>
 </html>

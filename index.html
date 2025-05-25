@@ -108,23 +108,23 @@
 
     <script>
 
-// Safari検出と警告
-window.onload = function () {
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+// // Safari検出と警告
+// window.onload = function () {
+//     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
     
-    if (isSafari) {
-        Swal.fire({
-            title: '',
-            html: 'Safariではこのアプリは使用できません。<br>Chromeに遷移してください。',
-            icon: 'error',
-            confirmButtonText: 'Chromeをお持ちでない方はこちら',
-            allowOutsideClick: false,
-            customClass: 'swal-wide'
-        }).then(() => {
-            window.location.href = 'https://www.google.com/chrome/';
-        });
-    }
-};
+//     if (isSafari) {
+//         Swal.fire({
+//             title: '',
+//             html: 'Safariではこのアプリは使用できません。<br>Chromeに遷移してください。',
+//             icon: 'error',
+//             confirmButtonText: 'Chromeをお持ちでない方はこちら',
+//             allowOutsideClick: false,
+//             customClass: 'swal-wide'
+//         }).then(() => {
+//             window.location.href = 'https://www.google.com/chrome/';
+//         });
+//     }
+// };
 
         document.getElementById('startButton').addEventListener('click', function () {
             const inputText = document.getElementById('inputText').value.trim();
