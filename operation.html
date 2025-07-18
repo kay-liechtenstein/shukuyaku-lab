@@ -45,8 +45,24 @@
 
         h2#targetRate {
             display: inline-block;
-            border-bottom: 3px solid #bfa76f;
+            position: relative;
             padding-bottom: 5px;
+        }
+
+        h2#targetRate::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 3px;
+            background-color: #bfa76f;
+            transition: width 0.6s ease;
+        }
+
+        h2#targetRate.underline-animate::after {
+            width: 100%;
         }
 
         #summaryRate {
@@ -222,6 +238,16 @@
     </div>
 
     <script>
+        // Add underline animation on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                const targetRateElement = document.getElementById('targetRate');
+                if (targetRateElement) {
+                    targetRateElement.classList.add('underline-animate');
+                }
+            }, 300);
+        });
+
         const urlParams = new URLSearchParams(window.location.search);
         const inputText = sessionStorage.getItem('inputText');
         const targetRateValue = sessionStorage.getItem('targetRate');

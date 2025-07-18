@@ -52,6 +52,25 @@
             font-size: 2.5em;
             color: #00897B;
             font-family: 'Playfair Display', 'Noto Serif JP', serif;
+            display: inline-block;
+            position: relative;
+            padding-bottom: 8px;
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 3px;
+            background-color: #bfa76f;
+            transition: width 0.6s ease;
+        }
+
+        h1.underline-animate::after {
+            width: 100%;
         }
 
         .upload-box {
@@ -173,6 +192,15 @@
     </div>
 
     <script>
+        // Add underline animation on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                const h1Element = document.querySelector('h1');
+                if (h1Element) {
+                    h1Element.classList.add('underline-animate');
+                }
+            }, 300);
+        });
 
 // // Safari検出と警告
 // window.onload = function () {
