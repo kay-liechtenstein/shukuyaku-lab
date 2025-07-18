@@ -21,10 +21,28 @@
             min-height: 100vh;
         }
 
+        .header {
+            width: 100%;
+            background-color: #e8f5f5;
+            padding: 15px 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+
+        .header img {
+            height: 80px;
+            width: auto;
+        }
+
         .container {
-            width: 50%;
+            width: 70%;
             max-width: 1500px;
-            margin: 80px auto 60px auto;
+            margin: 120px auto 60px auto;
             text-align: center;
             font-family: 'Noto Serif JP', serif;
         }
@@ -72,7 +90,7 @@
         }
 
         .input-box {
-            width: 200px;
+            width: 160px;
             font-size: 1em;
             padding: 10px 15px;
             margin-bottom: 10px;
@@ -131,6 +149,9 @@
     </style>
 </head>
 <body>
+    <div class="header">
+        <img src="logo.png" alt="Logo">
+    </div>
     <div class="container">
         <h1>縮約bot β</h1>
         
