@@ -4,103 +4,171 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>縮約プラットフォーム</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.5.0/css/all.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Noto Serif JP', '游明朝', 'Yu Mincho', 'Hiragino Mincho ProN', 'MS P明朝', serif;
+            background-color: #f5fcfc;
             margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            box-sizing: border-box;
-            height: 140vh;
-            background-image: url('bg1.jpg'); /* 画像を背景として設定 */
-            background-size: cover; /* 画像を全体にフィット */
-            background-position: center; /* 画像の中央揃え */
-            background-repeat: no-repeat; /* 繰り返しを無効化 */
+            padding: 0;
+        }
+
+        h2 {
+            text-align: center;
+            font-size: 2em;
+            color: #00897B;
+            font-family: 'Playfair Display', serif;
+            margin-top: 40px;
         }
 
         #summaryRate {
-            font-size: 1.2rem;
+            position: relative;
+            display: inline-block;
+            text-align: center;
+            font-size: 1.7em;
             font-weight: bold;
-            color: #333;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-
-        #targetRate {
-            font-size: 1rem;
-            font-weight: normal;
-            color: #555;
-            text-align: center;
-            margin-bottom: 20px;
+            margin: 10px 0;
         }
 
         .container {
+            max-width: 1100px;
+            margin: 30px auto 50px auto;
             display: flex;
             gap: 20px;
-            width: 100%;
-            align-items: flex-start;
+            justify-content: center;
+            padding: 0 20px;
         }
 
         .column {
             flex: 1;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            padding: 10px;
-            background-color: #fff;
-            word-wrap: break-word;
-            box-sizing: border-box;
+            background: #fff;
+            border: 2px solid #bfa76f;
+            padding: 20px;
+            min-height: 200px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03);
         }
 
-        .highlight {
-            background-color: turquoise;
-        }
+        .highlight { background-color: cyan; }
+        .output-wrapper { display: flex; justify-content: space-between; align-items: center; }
+        .output-title { font-size: 1.2em; font-weight: bold; color: #00897B}
 
-        .output-wrapper {
+        .downloadButton {
+            background-color: #28a745;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            margin-bottom: 15px;
         }
 
-        .output-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin: 0;
-            display: flex;
-            align-items: center;
+        .downloadButton:hover {
+            background-color: #218838;
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .downloadButton .material-icons {
+            font-size: 24px;
+            color: white;
         }
 
         .copyButton {
-            margin-left: 10px;
-            background: none;
+            background-color: #17a2b8;
             border: none;
-            font-size: 1.5rem;
+            border-radius: 6px;
+            padding: 10px 12px;
             cursor: pointer;
-            color: #007bff;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
         }
 
         .copyButton:hover {
-            color: #0056b3;
+            background-color: #138496;
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
         }
 
-        .output, #leftColumn {
-            font-size: 1rem;
-            padding: 10px;
+        .copyButton .material-icons {
+            font-size: 24px;
+            color: white;
+        }
+
+        #leftColumn, #highlightedText {
             white-space: pre-wrap;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-            min-height: 150px;
-            flex: 1;
+            font-size: 1em;
+            padding: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container { flex-direction: column; }
+        }
+
+        @keyframes sparkle {
+            0% {
+                opacity: 0;
+                transform: scale(0.8) rotate(0deg);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.3) rotate(180deg);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0.8) rotate(360deg);
+            }
+        }
+
+        #summaryRate.sparkle::after {
+            content: "✨";
+            position: absolute;
+            top: -15px;
+            right: -25px;
+            font-size: 1.4em;
+            animation: sparkle 1.3s ease-out forwards;
+            pointer-events: none;
+        }
+
+        .tooltip-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip-text {
+            visibility: hidden;
+            background-color: #333;
+            color: #fff;
+            font-size: 0.8em;
+            text-align: center;
+            border-radius: 4px;
+            padding: 5px 8px;
+            position: absolute;
+            z-index: 200;
+            bottom: 130%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.2s;
+            white-space: nowrap;
+        }
+
+        .tooltip-container:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
         }
     </style>
 </head>
 <body>
-    <div id="summaryRate">現在の縮約率: 0.00%</div>
-    <div id="targetRate"></div>
+    <h2 id="targetRate"></h2>
+    <div style="text-align: center;">
+        <div id="summaryRate">現在の縮約率: 0.00%</div>
+    </div>
     <div class="container">
         <div class="column">
             <div class="output-wrapper">
@@ -112,9 +180,14 @@
         <div class="column">
             <div class="output-wrapper">
                 <h2 class="output-title">縮約後のテキスト</h2>
-                <button class="copyButton" onclick="copyToClipboard()">📋</button>
+                <div class="tooltip-container">
+                    <button class="copyButton" onclick="copyToClipboard()">
+                        <span class="material-icons">content_copy</span>
+                    </button>
+                    <div class="tooltip-text">クリップボードにコピー</div>
+                </div>
             </div>
-            <div class="output" id="highlightedText"></div>
+            <div id="highlightedText"></div>
         </div>
     </div>
 
@@ -135,7 +208,7 @@
         let highlightRanges = [];
 
         if (targetRateValue) {
-            targetRateDisplay.textContent = `目標の縮約率: ${targetRateValue}%`;
+            targetRateDisplay.textContent = `目標縮約率: ${targetRateValue}%`;
         }
 
         // DOMの選択範囲を文字インデックスに変換する関数
@@ -285,6 +358,8 @@
             highlightedTextDisplay.textContent = selectedChars;
         }
 
+        let prevColorPink = false;
+
         function updateSummaryRate() {
             let highlightedLength = 0;
             highlightRanges.forEach(hr => {
@@ -301,8 +376,15 @@
                 const targetRateNum = parseFloat(targetRateValue);
                 const lowerBound = targetRateNum - 5;
                 const upperBound = targetRateNum + 5;
+                const isNowPink = (summaryPercentage >= lowerBound && summaryPercentage <= upperBound);
 
-                summaryRateDisplay.style.color = summaryPercentage >= lowerBound && summaryPercentage <= upperBound ? 'deeppink' : '#333';
+                if (isNowPink && !prevColorPink) {
+                    summaryRateDisplay.classList.add('sparkle');
+                    setTimeout(() => summaryRateDisplay.classList.remove('sparkle'), 900);
+                }
+
+                summaryRateDisplay.style.color = isNowPink ? 'deeppink' : '#333';
+                prevColorPink = isNowPink;
             }
         }
 

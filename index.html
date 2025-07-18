@@ -4,106 +4,151 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>縮約bot β</title>
-    <link href="https://fonts.googleapis.com/css2?family=Yusei+Magic&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <link rel="icon" href="cat.png" type="image/x-icon">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Noto Serif JP', '游明朝', 'Yu Mincho', 'Hiragino Mincho ProN', 'MS P明朝', serif;
+            background-color: #f5fcfc;
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
-            height: 100vh;
-    height: 140vh;
-    background-image: url('bg1.jpg'); /* 画像を背景として設定 */
-    background-size: cover; /* 画像を全体にフィット */
-    background-position: center; /* 画像の中央揃え */
-    background-repeat: no-repeat; /* 繰り返しを無効化 */
+            min-height: 100vh;
         }
 
         .container {
+            width: 50%;
+            max-width: 1500px;
+            margin: 80px auto 60px auto;
             text-align: center;
-            margin-top: 1px;
+            font-family: 'Noto Serif JP', serif;
         }
 
         h1 {
+            margin-bottom: 40px;
+            font-size: 2.5em;
+            color: #00897B;
+            font-family: 'Playfair Display', 'Noto Serif JP', serif;
+        }
+
+        .upload-box {
+            background-color: #fff;
+            border: 2px solid #bfa76f;
+            border-radius: 0px;
+            padding: 20px;
             margin-bottom: 20px;
-            font-size: 3rem;
-            color: #333;
-            font-family: 'Sawarabi Mincho', serif;
+            font-family: 'Noto Serif JP', '游明朝', 'Yu Mincho', 'Hiragino Mincho ProN', 'MS P明朝', serif;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03);
+            transition: border-color 0.2s;
+        }
+
+        .upload-box label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 10px;
+            font-family: inherit;
+            color: #004D40;
         }
 
         .textarea-box {
-            width: 60vw;
-            height: 500px;
-            font-size: 1.0rem;
-            padding: 15px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            resize: both;
+            width: calc(100% - 44px);
+            height: 300px;
+            font-size: 1em;
+            padding: 12px 20px;
+            margin-bottom: 10px;
+            border: 2px solid #00897B;
+            border-radius: 10px;
+            background-color: #fff;
+            font-family: inherit;
+            color: #004D40;
+            box-shadow: 0 2px 4px rgba(0, 137, 123, 0.15);
+            resize: vertical;
+            box-sizing: border-box;
         }
 
         .input-box {
-            width: 30%;
-            font-size: 1.0rem;
-            padding: 15px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+            width: 200px;
+            font-size: 1em;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border: 2px solid #00897B;
+            border-radius: 10px;
+            background-color: #fff;
+            font-family: inherit;
+            color: #004D40;
+            box-shadow: 0 2px 4px rgba(0, 137, 123, 0.15);
+            appearance: none;
         }
 
         button {
-            margin-top: 20px;
-            padding: 15px 30px;
-            font-size: 1.2rem;
+            display: block;
+            margin: 40px auto 20px auto;
+            background-color: #00897B;
             color: white;
-            background: linear-gradient(45deg, #ff7eb3, #ff467e);
+            padding: 12px 25px;
             border: none;
             border-radius: 25px;
+            font-size: 1em;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            transform: scale(1);
+            font-family: 'Playfair Display', 'Noto Serif JP', serif;
         }
 
         button:hover {
-            transform: scale(1.1);
-            box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.3);
-        }
-
-        button:active {
+            background-color: #00695C;
             transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
         }
 
         .footer {
             text-align: center;
             font-size: 0.9rem;
-            color: #555;
+            color: #004D40;
             margin-top: 30px;
-            padding-bottom: 10px;
+            padding-bottom: 20px;
+            font-family: 'Noto Serif JP', serif;
         }
 
         .footer a {
             text-decoration: none;
-            color: #555;
+            color: #004D40;
             font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 40px 20px;
+                max-width: 100%;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>縮約bot β</h1>
-        <textarea class="textarea-box" id="inputText" placeholder="縮約前の元テキスト" rows="10"></textarea>
-        <input class="input-box" id="targetRate" type="number" placeholder="目標の縮約率（%・整数・半角）" />
-        <br>
+        
+        <div class="upload-box">
+            <label>縮約前の元テキスト</label>
+            <textarea class="textarea-box" id="inputText" placeholder="ここにテキストを入力してください" rows="10"></textarea>
+        </div>
+        
+        <div class="upload-box">
+            <label>目標の縮約率（%）</label>
+            <input class="input-box" id="targetRate" type="number" placeholder="例: 50" min="1" max="99" value="50" />
+        </div>
+        
         <button id="startButton">縮約を開始する</button>
     </div>
 
     <div class="footer">
-        &copy; 2025 Koichi Akashi
+        &copy; 2025 Koichi Akashi & Tetsuhiro Gozu
     </div>
 
     <script>
