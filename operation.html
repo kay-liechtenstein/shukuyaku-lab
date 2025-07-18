@@ -40,7 +40,13 @@
             font-size: 2em;
             color: #00897B;
             font-family: 'Playfair Display', serif;
-            margin-top: 80px;
+            margin-top: 140px;
+        }
+
+        h2#targetRate {
+            display: inline-block;
+            border-bottom: 3px solid #bfa76f;
+            padding-bottom: 5px;
         }
 
         #summaryRate {
@@ -53,7 +59,7 @@
         }
 
         .container {
-            width: 70%;
+            width: 90%;
             max-width: 1100px;
             margin: 30px auto 50px auto;
             display: flex;
@@ -73,7 +79,7 @@
 
         .highlight { background-color: cyan; }
         .output-wrapper { display: flex; justify-content: space-between; align-items: center; }
-        .output-title { font-size: 1.2em; font-weight: bold; color: #00897B}
+        .output-title { font-size: 1.2em; font-weight: bold; color: #00897B; margin-top: 0; }
 
         .downloadButton {
             background-color: #28a745;
@@ -187,7 +193,9 @@
     <div class="header">
         <img src="logo.png" alt="Logo">
     </div>
-    <h2 id="targetRate"></h2>
+    <div style="text-align: center;">
+        <h2 id="targetRate"></h2>
+    </div>
     <div style="text-align: center;">
         <div id="summaryRate">現在の縮約率: 0.00%</div>
     </div>
