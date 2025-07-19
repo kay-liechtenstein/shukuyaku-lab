@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>縮約bot β</title>
+    <title>縮約ラボ | ホーム</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-    <link rel="icon" href="cat.png" type="image/x-icon">
+    <link rel="icon" href="fav.png" type="image/x-icon">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
@@ -35,23 +35,23 @@
         }
 
         .header img {
-            height: 80px;
+            height: 90px;
             width: auto;
             cursor: pointer;
         }
 
         .container {
-            width: 70%;
+            width: 80%;
             max-width: 1500px;
-            margin: 120px auto 60px auto;
+            margin: 140px auto 60px auto;
             text-align: center;
             font-family: 'Noto Serif JP', serif;
         }
 
         h1 {
-            margin-bottom: 40px;
+            margin-bottom: 60px;
             font-size: 2.5em;
-            color: #00897B;
+            color: #004D40;
             font-family: 'Playfair Display', 'Noto Serif JP', serif;
             display: inline-block;
             position: relative;
@@ -175,7 +175,7 @@
         </a>
     </div>
     <div class="container">
-        <h1>縮約bot β</h1>
+        <h1>ShukuYaku LAB</h1>
         
         <div class="upload-box">
             <label>縮約前の元テキスト</label>
@@ -191,11 +191,10 @@
     </div>
 
     <div class="footer">
-        &copy; 2025 Koichi Akashi & Tetsuhiro Gozu
+        &copy; Koichi Akashi & Tetsuhiro Gozu 2025
     </div>
 
     <script>
-        // Add underline animation on page load
         window.addEventListener('DOMContentLoaded', function() {
             setTimeout(function() {
                 const h1Element = document.querySelector('h1');
@@ -204,24 +203,6 @@
                 }
             }, 300);
         });
-
-// // Safari検出と警告
-// window.onload = function () {
-//     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    
-//     if (isSafari) {
-//         Swal.fire({
-//             title: '',
-//             html: 'Safariではこのアプリは使用できません。<br>Chromeに遷移してください。',
-//             icon: 'error',
-//             confirmButtonText: 'Chromeをお持ちでない方はこちら',
-//             allowOutsideClick: false,
-//             customClass: 'swal-wide'
-//         }).then(() => {
-//             window.location.href = 'https://www.google.com/chrome/';
-//         });
-//     }
-// };
 
         document.getElementById('startButton').addEventListener('click', function () {
             const inputText = document.getElementById('inputText').value.trim();
@@ -271,11 +252,9 @@
                 return;
             }
 
-            // sessionStorage にデータを保存
             sessionStorage.setItem('inputText', inputText);
             sessionStorage.setItem('targetRate', targetRate);
 
-            // operation.html に遷移
             window.open('operation.html', '_blank');
         });
     </script>

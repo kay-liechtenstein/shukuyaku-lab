@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>縮約プラットフォーム</title>
+    <title>縮約ラボ | 作成</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.5.0/css/all.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <link rel="icon" href="fav.png" type="image/x-icon">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
@@ -31,7 +32,7 @@
         }
 
         .header img {
-            height: 80px;
+            height: 90px;
             width: auto;
             cursor: pointer;
         }
@@ -41,7 +42,7 @@
             font-size: 2em;
             color: #00897B;
             font-family: 'Playfair Display', serif;
-            margin-top: 140px;
+            margin-top: 180px;
         }
 
         h2#targetRate {
@@ -70,7 +71,7 @@
             position: relative;
             display: inline-block;
             text-align: center;
-            font-size: 1.7em;
+            font-size: 1.5em;
             font-weight: bold;
             margin: 10px 0;
         }
@@ -142,6 +143,43 @@
             color: white;
         }
 
+        .highlightButton {
+            background-color: #17a2b8;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: none;
+            align-items: center;
+        }
+
+        .highlightButton.active {
+            background-color: #a89454;
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        @media (min-width: 769px) {
+            .highlightButton:hover {
+                background-color: #a89454;
+                box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+            }
+        }
+
+        .highlightButton .material-icons {
+            font-size: 24px;
+            color: white;
+        }
+
+        #leftColumn.highlight-mode {
+            cursor: crosshair;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
         #leftColumn, #highlightedText {
             white-space: pre-wrap;
             font-size: 1em;
@@ -150,6 +188,7 @@
 
         @media (max-width: 768px) {
             .container { flex-direction: column; }
+            .highlightButton { display: flex; }
         }
 
         @keyframes sparkle {
@@ -222,6 +261,12 @@
         <div class="column">
             <div class="output-wrapper">
                 <h2 class="output-title">縮約に使う文字をハイライト</h2>
+                <div class="tooltip-container highlight-button-container">
+                    <button class="highlightButton">
+                        <span class="material-icons">edit</span>
+                    </button>
+                    <div class="tooltip-text">テキストをハイライト</div>
+                </div>
             </div>
             <div id="leftColumn" contenteditable="false">
                 </div>
@@ -262,6 +307,11 @@
         const targetRateDisplay = document.getElementById('targetRate');
         const highlightedTextDisplay = document.getElementById('highlightedText');
         const summaryRateDisplay = document.getElementById('summaryRate');
+        const highlightButton = document.querySelector('.highlightButton');
+        
+        let isHighlightMode = false;
+        let isTouchHighlighting = false;
+        let touchedChars = new Set();
 
         // ハイライトの範囲を {start, end} オブジェクトの配列として格納
         let highlightRanges = [];
@@ -269,6 +319,92 @@
         if (targetRateValue) {
             targetRateDisplay.textContent = `目標縮約率: ${targetRateValue}%`;
         }
+
+        // ハイライトボタンのクリックイベント
+        highlightButton.addEventListener('click', () => {
+            isHighlightMode = !isHighlightMode;
+            highlightButton.classList.toggle('active');
+            leftColumn.classList.toggle('highlight-mode');
+            
+            if (isHighlightMode) {
+                // タッチモードを有効化
+                leftColumn.setAttribute('contenteditable', 'false');
+            } else {
+                // タッチモードを無効化
+                leftColumn.setAttribute('contenteditable', 'false');
+                touchedChars.clear();
+            }
+        });
+
+        // タッチイベントの処理
+        function getCharIndexFromPoint(x, y) {
+            const range = document.caretRangeFromPoint(x, y);
+            if (!range) return -1;
+            
+            const preRange = range.cloneRange();
+            preRange.selectNodeContents(leftColumn);
+            preRange.setEnd(range.startContainer, range.startOffset);
+            return preRange.toString().length;
+        }
+
+        leftColumn.addEventListener('touchstart', (e) => {
+            if (!isHighlightMode) return;
+            e.preventDefault();
+            isTouchHighlighting = true;
+            touchedChars.clear();
+            
+            const touch = e.touches[0];
+            const charIndex = getCharIndexFromPoint(touch.clientX, touch.clientY);
+            if (charIndex !== -1) {
+                touchedChars.add(charIndex);
+            }
+        });
+
+        leftColumn.addEventListener('touchmove', (e) => {
+            if (!isHighlightMode || !isTouchHighlighting) return;
+            e.preventDefault();
+            
+            const touch = e.touches[0];
+            const charIndex = getCharIndexFromPoint(touch.clientX, touch.clientY);
+            if (charIndex !== -1) {
+                touchedChars.add(charIndex);
+            }
+        });
+
+        leftColumn.addEventListener('touchend', (e) => {
+            if (!isHighlightMode || !isTouchHighlighting) return;
+            e.preventDefault();
+            isTouchHighlighting = false;
+            
+            if (touchedChars.size > 0) {
+                // タッチされた文字の範囲を計算
+                const sortedIndices = Array.from(touchedChars).sort((a, b) => a - b);
+                let ranges = [];
+                let rangeStart = sortedIndices[0];
+                let rangeEnd = sortedIndices[0];
+                
+                for (let i = 1; i < sortedIndices.length; i++) {
+                    if (sortedIndices[i] - sortedIndices[i-1] <= 1) {
+                        rangeEnd = sortedIndices[i];
+                    } else {
+                        ranges.push({start: rangeStart, end: rangeEnd + 1});
+                        rangeStart = sortedIndices[i];
+                        rangeEnd = sortedIndices[i];
+                    }
+                }
+                ranges.push({start: rangeStart, end: rangeEnd + 1});
+                
+                // 各範囲をハイライト
+                ranges.forEach(range => {
+                    highlightSelection(range.start, range.end);
+                });
+                
+                renderTextWithHighlights();
+                updateHighlightedText();
+                updateSummaryRate();
+                touchedChars.clear();
+            }
+        });
 
         // DOMの選択範囲を文字インデックスに変換する関数
         function getSelectionCharacterOffsetWithin(element) {
@@ -289,6 +425,8 @@
 
         // 選択に基づいてハイライトまたはハイライト解除を適用する関数
         leftColumn.addEventListener('mouseup', () => {
+            // ハイライトモードの場合はマウスイベントを無視
+            if (isHighlightMode) return;
             const selection = window.getSelection();
             if (!selection.rangeCount || !selection.toString().trim()) {
                 return;
