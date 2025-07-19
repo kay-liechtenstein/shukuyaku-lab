@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Simple Touch Highlight</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            margin: 0;
+        }
+        
+        #textContainer {
+            border: 2px solid #ccc;
+            padding: 20px;
+            font-size: 20px;
+            line-height: 1.8;
+            margin: 20px 0;
+            position: relative;
+        }
+        
+        .char {
+            display: inline;
+            position: relative;
+        }
+        
+        .char.highlighted {
+            background-color: cyan;
+            border-radius: 2px;
+        }
+        
+        button {
+            font-size: 18px;
+            padding: 12px 24px;
+            background-color: #17a2b8;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        button.active {
+            background-color: #a89454;
+        }
+        
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple Touch Highlight Test</h1>
+    <button id="toggleBtn">Enable Highlight Mode</button>
+    
+    <div id="textContainer"></div>
+    
+    <div id="status">Status: Ready</div>
+    
+    <script>
+        const text = "これはタッチハイライトのテストテキストです。指でなぞってハイライトできるかテストしてみてください。複数行にわたるテキストもハイライトできます。";
+        const container = document.getElementById('textContainer');
+        const button = document.getElementById('toggleBtn');
+        const status = document.getElementById('status');
+        
+        let highlightMode = false;
+        let touching = false;
+        let charElements = [];
+        
+        // Create character elements
+        function createCharElements() {
+            container.innerHTML = '';
+            charElements = [];
+            
+            for (let i = 0; i < text.length; i++) {
+                const span = document.createElement('span');
+                span.className = 'char';
+                span.textContent = text[i];
+                span.dataset.index = i;
+                container.appendChild(span);
+                charElements.push(span);
+            }
+        }
+        
+        // Toggle highlight mode
+        button.addEventListener('click', () => {
+            highlightMode = !highlightMode;
+            button.classList.toggle('active');
+            button.textContent = highlightMode ? 'Disable Highlight Mode' : 'Enable Highlight Mode';
+            status.textContent = `Status: Highlight mode ${highlightMode ? 'ON' : 'OFF'}`;
+            
+            if (highlightMode) {
+                container.style.touchAction = 'none';
+                container.style.userSelect = 'none';
+                container.style.webkitUserSelect = 'none';
+            } else {
+                container.style.touchAction = 'auto';
+                container.style.userSelect = 'auto';
+                container.style.webkitUserSelect = 'auto';
+            }
+        });
+        
+        // Get element at coordinates
+        function getElementAtPoint(x, y) {
+            return document.elementFromPoint(x, y);
+        }
+        
+        // Handle touch events
+        container.addEventListener('touchstart', (e) => {
+            if (!highlightMode) return;
+            e.preventDefault();
+            touching = true;
+            
+            const touch = e.touches[0];
+            const element = getElementAtPoint(touch.clientX, touch.clientY);
+            
+            if (element && element.classList.contains('char')) {
+                element.classList.add('highlighted');
+                status.textContent = `Status: Started highlighting at char ${element.dataset.index}`;
+            }
+        }, { passive: false });
+        
+        container.addEventListener('touchmove', (e) => {
+            if (!highlightMode || !touching) return;
+            e.preventDefault();
+            
+            const touch = e.touches[0];
+            const element = getElementAtPoint(touch.clientX, touch.clientY);
+            
+            if (element && element.classList.contains('char')) {
+                element.classList.add('highlighted');
+                
+                // Count highlighted chars
+                const highlighted = document.querySelectorAll('.char.highlighted').length;
+                status.textContent = `Status: Highlighting... (${highlighted} chars)`;
+            }
+        }, { passive: false });
+        
+        container.addEventListener('touchend', (e) => {
+            if (!highlightMode) return;
+            e.preventDefault();
+            touching = false;
+            
+            const highlighted = document.querySelectorAll('.char.highlighted').length;
+            status.textContent = `Status: Finished highlighting (${highlighted} chars)`;
+        }, { passive: false });
+        
+        // Prevent scrolling while in highlight mode
+        document.body.addEventListener('touchmove', (e) => {
+            if (highlightMode && touching) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // Initialize
+        createCharElements();
+    </script>
+</body>
+</html>

@@ -100,6 +100,16 @@
             border-radius: 2px;
             transition: background-color 0.2s ease;
         }
+        
+        .touch-char {
+            display: inline;
+            position: relative;
+        }
+        
+        .touch-char.touch-highlight {
+            background-color: rgba(0, 255, 255, 0.5);
+            border-radius: 2px;
+        }
         .output-wrapper { display: flex; justify-content: space-between; align-items: center; }
         .output-title { font-size: 1.2em; font-weight: bold; color: #00897B; margin-top: 0; }
 
@@ -333,12 +343,22 @@
             if (isHighlightMode) {
                 // タッチモードを有効化
                 leftColumn.style.touchAction = 'none';
+                leftColumn.style.webkitUserSelect = 'none';
+                leftColumn.style.userSelect = 'none';
                 leftColumn.setAttribute('contenteditable', 'false');
+                
+                // タッチ用に文字をspanでラップ
+                renderTextForTouch();
             } else {
                 // タッチモードを無効化
                 leftColumn.style.touchAction = 'auto';
+                leftColumn.style.webkitUserSelect = 'text';
+                leftColumn.style.userSelect = 'text';
                 leftColumn.setAttribute('contenteditable', 'false');
                 touchedChars.clear();
+                
+                // 通常のハイライト表示に戻す
+                renderTextWithHighlights();
             }
         });
 
@@ -365,53 +385,52 @@
         let touchStartIndex = -1;
         let touchEndIndex = -1;
 
-        leftColumn.addEventListener('touchstart', (e) => {
+        function handleTouchStart(e) {
             if (!isHighlightMode) return;
             e.preventDefault();
             isTouchHighlighting = true;
-            touchedChars.clear();
             
             const touch = e.touches[0];
-            const rect = leftColumn.getBoundingClientRect();
-            const x = touch.clientX;
-            const y = touch.clientY;
+            const element = document.elementFromPoint(touch.clientX, touch.clientY);
             
-            touchStartIndex = getCharIndexFromPoint(x, y);
-            touchEndIndex = touchStartIndex;
-            
-            if (touchStartIndex !== -1) {
-                touchedChars.add(touchStartIndex);
+            if (element && element.classList.contains('touch-char')) {
+                const index = parseInt(element.dataset.index);
+                touchStartIndex = index;
+                touchEndIndex = index;
+                touchedChars.clear();
+                touchedChars.add(index);
+                
+                // ハイライトを更新
+                updateTouchHighlight();
             }
-        });
+        }
 
-        leftColumn.addEventListener('touchmove', (e) => {
+        function handleTouchMove(e) {
             if (!isHighlightMode || !isTouchHighlighting) return;
             e.preventDefault();
             
             const touch = e.touches[0];
-            const charIndex = getCharIndexFromPoint(touch.clientX, touch.clientY);
+            const element = document.elementFromPoint(touch.clientX, touch.clientY);
             
-            if (charIndex !== -1) {
-                touchEndIndex = charIndex;
+            if (element && element.classList.contains('touch-char')) {
+                const index = parseInt(element.dataset.index);
+                touchEndIndex = index;
                 
                 // タッチ開始位置から現在位置までのすべての文字を追加
                 const start = Math.min(touchStartIndex, touchEndIndex);
                 const end = Math.max(touchStartIndex, touchEndIndex);
                 
+                touchedChars.clear();
                 for (let i = start; i <= end; i++) {
                     touchedChars.add(i);
                 }
                 
-                // リアルタイムでハイライトを表示
-                const tempHighlightRanges = [...highlightRanges];
-                tempHighlightRanges.push({start: start, end: end + 1});
-                
-                // 一時的にハイライトを表示
-                renderTextWithHighlightsTemp(tempHighlightRanges);
+                // ハイライトを更新
+                updateTouchHighlight();
             }
-        });
+        }
 
-        leftColumn.addEventListener('touchend', (e) => {
+        function handleTouchEnd(e) {
             if (!isHighlightMode || !isTouchHighlighting) return;
             e.preventDefault();
             isTouchHighlighting = false;
@@ -436,15 +455,61 @@
                     highlightSelection(start, end + 1);
                 }
                 
-                renderTextWithHighlights();
+                // タッチ用表示を更新
+                renderTextForTouch();
                 updateHighlightedText();
                 updateSummaryRate();
                 touchedChars.clear();
                 touchStartIndex = -1;
                 touchEndIndex = -1;
             }
-        });
+        }
 
+        // タッチ用に文字をspanでラップする関数
+        function renderTextForTouch() {
+            leftColumn.innerHTML = '';
+            
+            if (!originalText) {
+                leftColumn.innerHTML = '<p>テキストがありません。</p>';
+                return;
+            }
+            
+            for (let i = 0; i < originalText.length; i++) {
+                const span = document.createElement('span');
+                span.className = 'touch-char';
+                span.dataset.index = i;
+                span.textContent = originalText[i];
+                
+                // ハイライト範囲に含まれているかチェック
+                let isHighlighted = false;
+                for (const range of highlightRanges) {
+                    if (i >= range.start && i < range.end) {
+                        isHighlighted = true;
+                        break;
+                    }
+                }
+                
+                if (isHighlighted) {
+                    span.classList.add('highlight');
+                }
+                
+                leftColumn.appendChild(span);
+            }
+        }
+        
+        // タッチ中のハイライトを更新
+        function updateTouchHighlight() {
+            const charElements = leftColumn.querySelectorAll('.touch-char');
+            
+            charElements.forEach((elem, index) => {
+                if (touchedChars.has(index)) {
+                    elem.classList.add('touch-highlight');
+                } else {
+                    elem.classList.remove('touch-highlight');
+                }
+            });
+        }
+        
         // 一時的なハイライト表示用の関数
         function renderTextWithHighlightsTemp(tempRanges) {
             leftColumn.innerHTML = '';
@@ -695,6 +760,18 @@
         } else {
             leftColumn.innerHTML = '<p>テキストがありません。</p>';
         }
+        
+        // タッチイベントリスナーを追加
+        leftColumn.addEventListener('touchstart', handleTouchStart, { passive: false });
+        leftColumn.addEventListener('touchmove', handleTouchMove, { passive: false });
+        leftColumn.addEventListener('touchend', handleTouchEnd, { passive: false });
+        
+        // スクロールを防ぐ
+        document.body.addEventListener('touchmove', (e) => {
+            if (isHighlightMode && isTouchHighlighting) {
+                e.preventDefault();
+            }
+        }, { passive: false });
         
         // 初期表示と更新
         updateHighlightedText();
