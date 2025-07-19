@@ -95,7 +95,11 @@
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03);
         }
 
-        .highlight { background-color: cyan; }
+        .highlight { 
+            background-color: cyan;
+            border-radius: 2px;
+            transition: background-color 0.2s ease;
+        }
         .output-wrapper { display: flex; justify-content: space-between; align-items: center; }
         .output-title { font-size: 1.2em; font-weight: bold; color: #00897B; margin-top: 0; }
 
@@ -328,9 +332,11 @@
             
             if (isHighlightMode) {
                 // タッチモードを有効化
+                leftColumn.style.touchAction = 'none';
                 leftColumn.setAttribute('contenteditable', 'false');
             } else {
                 // タッチモードを無効化
+                leftColumn.style.touchAction = 'auto';
                 leftColumn.setAttribute('contenteditable', 'false');
                 touchedChars.clear();
             }
@@ -338,14 +344,26 @@
 
         // タッチイベントの処理
         function getCharIndexFromPoint(x, y) {
-            const range = document.caretRangeFromPoint(x, y);
-            if (!range) return -1;
-            
-            const preRange = range.cloneRange();
-            preRange.selectNodeContents(leftColumn);
-            preRange.setEnd(range.startContainer, range.startOffset);
-            return preRange.toString().length;
+            if (document.caretPositionFromPoint) {
+                const pos = document.caretPositionFromPoint(x, y);
+                if (!pos) return -1;
+                const range = document.createRange();
+                range.selectNodeContents(leftColumn);
+                range.setEnd(pos.offsetNode, pos.offset);
+                return range.toString().length;
+            } else if (document.caretRangeFromPoint) {
+                const range = document.caretRangeFromPoint(x, y);
+                if (!range) return -1;
+                const preRange = range.cloneRange();
+                preRange.selectNodeContents(leftColumn);
+                preRange.setEnd(range.startContainer, range.startOffset);
+                return preRange.toString().length;
+            }
+            return -1;
         }
+
+        let touchStartIndex = -1;
+        let touchEndIndex = -1;
 
         leftColumn.addEventListener('touchstart', (e) => {
             if (!isHighlightMode) return;
@@ -354,9 +372,15 @@
             touchedChars.clear();
             
             const touch = e.touches[0];
-            const charIndex = getCharIndexFromPoint(touch.clientX, touch.clientY);
-            if (charIndex !== -1) {
-                touchedChars.add(charIndex);
+            const rect = leftColumn.getBoundingClientRect();
+            const x = touch.clientX;
+            const y = touch.clientY;
+            
+            touchStartIndex = getCharIndexFromPoint(x, y);
+            touchEndIndex = touchStartIndex;
+            
+            if (touchStartIndex !== -1) {
+                touchedChars.add(touchStartIndex);
             }
         });
 
@@ -366,8 +390,24 @@
             
             const touch = e.touches[0];
             const charIndex = getCharIndexFromPoint(touch.clientX, touch.clientY);
+            
             if (charIndex !== -1) {
-                touchedChars.add(charIndex);
+                touchEndIndex = charIndex;
+                
+                // タッチ開始位置から現在位置までのすべての文字を追加
+                const start = Math.min(touchStartIndex, touchEndIndex);
+                const end = Math.max(touchStartIndex, touchEndIndex);
+                
+                for (let i = start; i <= end; i++) {
+                    touchedChars.add(i);
+                }
+                
+                // リアルタイムでハイライトを表示
+                const tempHighlightRanges = [...highlightRanges];
+                tempHighlightRanges.push({start: start, end: end + 1});
+                
+                // 一時的にハイライトを表示
+                renderTextWithHighlightsTemp(tempHighlightRanges);
             }
         });
 
@@ -376,35 +416,80 @@
             e.preventDefault();
             isTouchHighlighting = false;
             
-            if (touchedChars.size > 0) {
-                // タッチされた文字の範囲を計算
-                const sortedIndices = Array.from(touchedChars).sort((a, b) => a - b);
-                let ranges = [];
-                let rangeStart = sortedIndices[0];
-                let rangeEnd = sortedIndices[0];
+            if (touchedChars.size > 0 && touchStartIndex !== -1 && touchEndIndex !== -1) {
+                const start = Math.min(touchStartIndex, touchEndIndex);
+                const end = Math.max(touchStartIndex, touchEndIndex);
                 
-                for (let i = 1; i < sortedIndices.length; i++) {
-                    if (sortedIndices[i] - sortedIndices[i-1] <= 1) {
-                        rangeEnd = sortedIndices[i];
-                    } else {
-                        ranges.push({start: rangeStart, end: rangeEnd + 1});
-                        rangeStart = sortedIndices[i];
-                        rangeEnd = sortedIndices[i];
+                // タッチ範囲が既存のハイライト内にあるかチェック
+                let isUnhighlight = false;
+                for (let i = 0; i < highlightRanges.length; i++) {
+                    const hr = highlightRanges[i];
+                    if (start >= hr.start && end + 1 <= hr.end) {
+                        isUnhighlight = true;
+                        break;
                     }
                 }
-                ranges.push({start: rangeStart, end: rangeEnd + 1});
                 
-                // 各範囲をハイライト
-                ranges.forEach(range => {
-                    highlightSelection(range.start, range.end);
-                });
+                if (isUnhighlight) {
+                    unhighlightSelection(start, end + 1);
+                } else {
+                    highlightSelection(start, end + 1);
+                }
                 
                 renderTextWithHighlights();
                 updateHighlightedText();
                 updateSummaryRate();
                 touchedChars.clear();
+                touchStartIndex = -1;
+                touchEndIndex = -1;
             }
         });
+
+        // 一時的なハイライト表示用の関数
+        function renderTextWithHighlightsTemp(tempRanges) {
+            leftColumn.innerHTML = '';
+            let currentIndex = 0;
+            
+            if (!originalText) {
+                leftColumn.innerHTML = '<p>テキストがありません。</p>';
+                return;
+            }
+            
+            // 範囲をマージしてソート
+            const allRanges = [...tempRanges];
+            allRanges.sort((a, b) => a.start - b.start);
+            
+            const merged = [];
+            let current = allRanges[0];
+            
+            for (let i = 1; i < allRanges.length; i++) {
+                const next = allRanges[i];
+                if (current.end >= next.start) {
+                    current = { start: current.start, end: Math.max(current.end, next.end) };
+                } else {
+                    merged.push(current);
+                    current = next;
+                }
+            }
+            if (current) merged.push(current);
+            
+            merged.forEach(hr => {
+                if (hr.start > currentIndex) {
+                    leftColumn.appendChild(document.createTextNode(originalText.substring(currentIndex, hr.start)));
+                }
+                
+                const span = document.createElement('span');
+                span.className = 'highlight';
+                span.textContent = originalText.substring(hr.start, hr.end);
+                leftColumn.appendChild(span);
+                
+                currentIndex = hr.end;
+            });
+            
+            if (currentIndex < originalText.length) {
+                leftColumn.appendChild(document.createTextNode(originalText.substring(currentIndex)));
+            }
+        }
 
         // DOMの選択範囲を文字インデックスに変換する関数
         function getSelectionCharacterOffsetWithin(element) {
@@ -604,8 +689,14 @@
                 });
         }
 
+        // 初期テキストを表示
+        if (originalText) {
+            leftColumn.textContent = originalText;
+        } else {
+            leftColumn.innerHTML = '<p>テキストがありません。</p>';
+        }
+        
         // 初期表示と更新
-        renderTextWithHighlights();
         updateHighlightedText();
         updateSummaryRate();
     </script>

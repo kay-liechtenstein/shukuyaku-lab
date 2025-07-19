@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Touch Highlight Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        
+        #testArea {
+            border: 2px solid #ccc;
+            padding: 20px;
+            font-size: 18px;
+            line-height: 1.6;
+            margin: 20px 0;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        .highlight {
+            background-color: cyan;
+            border-radius: 2px;
+        }
+        
+        button {
+            font-size: 16px;
+            padding: 10px 20px;
+            background-color: #17a2b8;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        button.active {
+            background-color: #a89454;
+        }
+        
+        #info {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Touch Highlight Test</h1>
+    <button id="toggleHighlight">Enable Touch Highlight</button>
+    
+    <div id="testArea">
+        これはタッチハイライトのテストテキストです。
+        指でなぞってハイライトできるかテストしてみてください。
+        複数行にわたるテキストもハイライトできます。
+    </div>
+    
+    <div id="info">
+        <p>Touch Info: <span id="touchInfo">Not touching</span></p>
+        <p>Highlighted chars: <span id="highlightCount">0</span></p>
+    </div>
+    
+    <script>
+        const button = document.getElementById('toggleHighlight');
+        const testArea = document.getElementById('testArea');
+        const touchInfo = document.getElementById('touchInfo');
+        const highlightCount = document.getElementById('highlightCount');
+        
+        let isHighlightMode = false;
+        let touchedIndices = new Set();
+        let originalText = testArea.textContent;
+        
+        button.addEventListener('click', () => {
+            isHighlightMode = !isHighlightMode;
+            button.classList.toggle('active');
+            button.textContent = isHighlightMode ? 'Disable Touch Highlight' : 'Enable Touch Highlight';
+        });
+        
+        function getCharIndexFromPoint(x, y) {
+            if (document.caretPositionFromPoint) {
+                const pos = document.caretPositionFromPoint(x, y);
+                if (!pos) return -1;
+                const range = document.createRange();
+                range.selectNodeContents(testArea);
+                range.setEnd(pos.offsetNode, pos.offset);
+                return range.toString().length;
+            } else if (document.caretRangeFromPoint) {
+                const range = document.caretRangeFromPoint(x, y);
+                if (!range) return -1;
+                const preRange = range.cloneRange();
+                preRange.selectNodeContents(testArea);
+                preRange.setEnd(range.startContainer, range.startOffset);
+                return preRange.toString().length;
+            }
+            return -1;
+        }
+        
+        let touchStartIndex = -1;
+        
+        testArea.addEventListener('touchstart', (e) => {
+            if (!isHighlightMode) return;
+            e.preventDefault();
+            
+            const touch = e.touches[0];
+            touchStartIndex = getCharIndexFromPoint(touch.clientX, touch.clientY);
+            touchedIndices.clear();
+            
+            if (touchStartIndex !== -1) {
+                touchedIndices.add(touchStartIndex);
+                touchInfo.textContent = `Started at index: ${touchStartIndex}`;
+            }
+        });
+        
+        testArea.addEventListener('touchmove', (e) => {
+            if (!isHighlightMode || touchStartIndex === -1) return;
+            e.preventDefault();
+            
+            const touch = e.touches[0];
+            const currentIndex = getCharIndexFromPoint(touch.clientX, touch.clientY);
+            
+            if (currentIndex !== -1) {
+                const start = Math.min(touchStartIndex, currentIndex);
+                const end = Math.max(touchStartIndex, currentIndex);
+                
+                touchedIndices.clear();
+                for (let i = start; i <= end; i++) {
+                    touchedIndices.add(i);
+                }
+                
+                renderHighlights();
+                touchInfo.textContent = `Selecting from ${start} to ${end}`;
+                highlightCount.textContent = touchedIndices.size;
+            }
+        });
+        
+        testArea.addEventListener('touchend', (e) => {
+            if (!isHighlightMode) return;
+            e.preventDefault();
+            
+            touchInfo.textContent = `Selection complete: ${touchedIndices.size} chars`;
+            touchStartIndex = -1;
+        });
+        
+        function renderHighlights() {
+            testArea.innerHTML = '';
+            let currentIndex = 0;
+            const sortedIndices = Array.from(touchedIndices).sort((a, b) => a - b);
+            
+            if (sortedIndices.length === 0) {
+                testArea.textContent = originalText;
+                return;
+            }
+            
+            // Create continuous ranges
+            const ranges = [];
+            let rangeStart = sortedIndices[0];
+            let rangeEnd = sortedIndices[0];
+            
+            for (let i = 1; i < sortedIndices.length; i++) {
+                if (sortedIndices[i] - sortedIndices[i-1] === 1) {
+                    rangeEnd = sortedIndices[i];
+                } else {
+                    ranges.push({start: rangeStart, end: rangeEnd + 1});
+                    rangeStart = sortedIndices[i];
+                    rangeEnd = sortedIndices[i];
+                }
+            }
+            ranges.push({start: rangeStart, end: rangeEnd + 1});
+            
+            // Render with highlights
+            ranges.forEach(range => {
+                if (range.start > currentIndex) {
+                    testArea.appendChild(document.createTextNode(originalText.substring(currentIndex, range.start)));
+                }
+                
+                const span = document.createElement('span');
+                span.className = 'highlight';
+                span.textContent = originalText.substring(range.start, range.end);
+                testArea.appendChild(span);
+                
+                currentIndex = range.end;
+            });
+            
+            if (currentIndex < originalText.length) {
+                testArea.appendChild(document.createTextNode(originalText.substring(currentIndex)));
+            }
+        }
+    </script>
+</body>
+</html>
