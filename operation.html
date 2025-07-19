@@ -97,19 +97,60 @@
 
         .highlight { 
             background-color: cyan;
-            border-radius: 2px;
             transition: background-color 0.2s ease;
         }
         
         .touch-char {
             display: inline;
             position: relative;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .touch-char.highlight {
+            background-color: transparent;
         }
         
         .touch-char.touch-highlight {
             background-color: rgba(0, 255, 255, 0.5);
-            border-radius: 2px;
         }
+        
+        /* Smooth highlights for consecutive characters */
+        .touch-char.highlight {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .touch-char.highlight::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: -1px;
+            right: -1px;
+            background-color: cyan;
+            z-index: -1;
+        }
+        
+        .touch-char.highlight:first-of-type::before,
+        .touch-char:not(.highlight) + .touch-char.highlight::before {
+            left: 0;
+            border-top-left-radius: 3px;
+            border-bottom-left-radius: 3px;
+        }
+        
+        .touch-char.highlight:last-of-type::before {
+            right: 0;
+            border-top-right-radius: 3px;
+            border-bottom-right-radius: 3px;
+        }
+        
+        .touch-char.highlight:has(+ .touch-char:not(.highlight))::before {
+            right: 0;
+            border-top-right-radius: 3px;
+            border-bottom-right-radius: 3px;
+        }
+        
         .output-wrapper { display: flex; justify-content: space-between; align-items: center; }
         .output-title { font-size: 1.2em; font-weight: bold; color: #00897B; margin-top: 0; }
 
@@ -221,7 +262,7 @@
         }
 
         #summaryRate.sparkle::after {
-            content: "✨";
+            content: "\2728";
             position: absolute;
             top: -15px;
             right: -25px;
@@ -249,13 +290,14 @@
             left: 50%;
             transform: translateX(-50%);
             opacity: 0;
-            transition: opacity 0.2s;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
             white-space: nowrap;
         }
 
-        .tooltip-container:hover .tooltip-text {
+        .tooltip-text.show {
             visibility: visible;
             opacity: 1;
+            transition-delay: 0s;
         }
     </style>
 </head>
@@ -315,6 +357,7 @@
         const targetRateValue = sessionStorage.getItem('targetRate');
 
         const originalText = inputText || '';
+        const originalTextArray = Array.from(originalText);
         const originalTextLength = originalText.replace(/\s+/g, '').length;
 
         const leftColumn = document.getElementById('leftColumn');
@@ -339,6 +382,13 @@
             isHighlightMode = !isHighlightMode;
             highlightButton.classList.toggle('active');
             leftColumn.classList.toggle('highlight-mode');
+            
+            // Show tooltip on click
+            const tooltip = highlightButton.parentElement.querySelector('.tooltip-text');
+            tooltip.classList.add('show');
+            setTimeout(() => {
+                tooltip.classList.remove('show');
+            }, 2000);
             
             if (isHighlightMode) {
                 // タッチモードを有効化
@@ -474,11 +524,14 @@
                 return;
             }
             
-            for (let i = 0; i < originalText.length; i++) {
+            // Convert string to array of grapheme clusters to handle multi-codepoint characters
+            const chars = Array.from(originalText);
+            
+            for (let i = 0; i < chars.length; i++) {
                 const span = document.createElement('span');
                 span.className = 'touch-char';
                 span.dataset.index = i;
-                span.textContent = originalText[i];
+                span.textContent = chars[i];
                 
                 // ハイライト範囲に含まれているかチェック
                 let isHighlighted = false;
@@ -540,19 +593,19 @@
             
             merged.forEach(hr => {
                 if (hr.start > currentIndex) {
-                    leftColumn.appendChild(document.createTextNode(originalText.substring(currentIndex, hr.start)));
+                    leftColumn.appendChild(document.createTextNode(originalTextArray.slice(currentIndex, hr.start).join('')));
                 }
                 
                 const span = document.createElement('span');
                 span.className = 'highlight';
-                span.textContent = originalText.substring(hr.start, hr.end);
+                span.textContent = originalTextArray.slice(hr.start, hr.end).join('');
                 leftColumn.appendChild(span);
                 
                 currentIndex = hr.end;
             });
             
-            if (currentIndex < originalText.length) {
-                leftColumn.appendChild(document.createTextNode(originalText.substring(currentIndex)));
+            if (currentIndex < originalTextArray.length) {
+                leftColumn.appendChild(document.createTextNode(originalTextArray.slice(currentIndex).join('')));
             }
         }
 
@@ -679,30 +732,30 @@
             highlightRanges.forEach(hr => {
                 // ハイライトの前にプレーンテキストを追加 (存在する場合)
                 if (hr.start > currentIndex) {
-                    leftColumn.appendChild(document.createTextNode(originalText.substring(currentIndex, hr.start)));
+                    leftColumn.appendChild(document.createTextNode(originalTextArray.slice(currentIndex, hr.start).join('')));
                 }
 
                 // ハイライトされたテキストを追加
                 const span = document.createElement('span');
                 span.className = 'highlight';
-                span.textContent = originalText.substring(hr.start, hr.end);
+                span.textContent = originalTextArray.slice(hr.start, hr.end).join('');
                 leftColumn.appendChild(span);
 
                 currentIndex = hr.end;
             });
 
             // 最後のハイライトの後に残っているプレーンテキストを追加
-            if (currentIndex < originalText.length) {
-                leftColumn.appendChild(document.createTextNode(originalText.substring(currentIndex)));
+            if (currentIndex < originalTextArray.length) {
+                leftColumn.appendChild(document.createTextNode(originalTextArray.slice(currentIndex).join('')));
             }
         }
 
         function updateHighlightedText() {
             let selectedChars = '';
             highlightRanges.forEach(hr => {
-                selectedChars += originalText.substring(hr.start, hr.end);
+                selectedChars += originalTextArray.slice(hr.start, hr.end).join('');
             });
-            highlightedTextDisplay.textContent = selectedChars;
+            highlightedTextDisplay.innerText = selectedChars;
         }
 
         let prevColorPink = false;
@@ -710,7 +763,7 @@
         function updateSummaryRate() {
             let highlightedLength = 0;
             highlightRanges.forEach(hr => {
-                highlightedLength += originalText.substring(hr.start, hr.end).replace(/\s+/g, '').length;
+                highlightedLength += originalTextArray.slice(hr.start, hr.end).join('').replace(/\s+/g, '').length;
             });
 
             const summaryPercentage = originalTextLength > 0
@@ -736,7 +789,7 @@
         }
 
         function copyToClipboard() {
-            const text = document.getElementById('highlightedText').textContent;
+            const text = document.getElementById('highlightedText').innerText || document.getElementById('highlightedText').textContent;
             navigator.clipboard.writeText(text)
                 .then(() => {
                     Swal.fire({
@@ -756,7 +809,7 @@
 
         // 初期テキストを表示
         if (originalText) {
-            leftColumn.textContent = originalText;
+            leftColumn.innerText = originalText;
         } else {
             leftColumn.innerHTML = '<p>テキストがありません。</p>';
         }
