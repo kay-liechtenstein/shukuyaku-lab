@@ -222,8 +222,12 @@
             border-radius: 10px;
         }
         
-        .mobile-br {
+        .mobile-only {
             display: none;
+        }
+        
+        .desktop-only {
+            display: inline;
         }
 
         @media (max-width: 768px) {
@@ -275,8 +279,12 @@
                 padding: 12px;
             }
             
-            .mobile-br {
+            .mobile-only {
                 display: inline;
+            }
+            
+            .desktop-only {
+                display: none;
             }
         }
 
@@ -364,7 +372,8 @@
             </div>
 
             <div class="footer-note">
-                縮約が適切に行われていない場合、複数の文字が同時に不適切と判定される場合があります。<span class="mobile-br"><br></span>最初の文字から順に削除・変更<span class="mobile-br"><br></span>するなどして修正してください。
+                <span class="desktop-only">縮約が適切に行われていない場合、複数の文字が同時に不適切と判定される場合があります。<br>最初の文字から順に削除・変更するなどして修正してください。</span>
+                <span class="mobile-only">縮約が適切に行われていない場合、複数の文字が同時に不適切と判定される場合があります。<br>最初の文字から順に削除・変更<br>するなどして修正してください。</span>
             </div>
         </div>
 
