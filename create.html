@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>縮約ラボ | ホーム</title>
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="縮約ラボ - 文章縮約ツール">
+    <meta property="og:description" content="テキストを目標の縮約率に合わせて効率的に縮約できるツール">
+    <meta property="og:image" content="logo.png">
+    <meta property="og:url" content="">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="縮約ラボ">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="縮約ラボ - 文章縮約ツール">
+    <meta name="twitter:description" content="テキストを目標の縮約率に合わせて効率的に縮約できるツール">
+    <meta name="twitter:image" content="logo.png">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <link rel="icon" href="fav.png" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            font-family: 'Noto Serif JP', '游明朝', 'Yu Mincho', 'Hiragino Mincho ProN', 'MS P明朝', serif;
+            background: linear-gradient(45deg, #eef7f7 0%, #f5fcfc 50%, #e8f5f5 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .header {
+            width: 100%;
+            background-color: #e8f5f5;
+            padding: 15px 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+
+        .header img {
+            height: 110px;
+            width: auto;
+            cursor: pointer;
+        }
+
+        .main-wrapper {
+            padding-top: 160px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 80%;
+            max-width: 1500px;
+            margin: 0 auto 60px auto;
+            text-align: center;
+            font-family: 'Noto Serif JP', serif;
+            position: relative;
+            top: 35px;
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: 60px;
+            font-size: 2.5em;
+            color: #004D40;
+            font-family: 'Playfair Display', 'Noto Serif JP', serif;
+            display: inline-block;
+            position: relative;
+            padding-bottom: 8px;
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 3px;
+            background: linear-gradient(45deg, #bfa76f, #e8d4a2, #9d8448);
+            transition: width 0.6s ease;
+        }
+
+        h1.underline-animate::after {
+            width: 100%;
+        }
+
+        .upload-box {
+            background-color: #fff;
+            border: 4px solid;
+            border-image: linear-gradient(45deg, #bfa76f, #e8d4a2, #9d8448) 1;
+            border-radius: 0px;
+            padding: 20px;
+            margin-bottom: 20px;
+            font-family: 'Noto Serif JP', '游明朝', 'Yu Mincho', 'Hiragino Mincho ProN', 'MS P明朝', serif;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03);
+            transition: border-color 0.2s;
+        }
+
+        .upload-box label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 10px;
+            font-family: inherit;
+            color: #004D40;
+        }
+
+        .textarea-box {
+            width: calc(100% - 44px);
+            height: 300px;
+            font-size: 1em;
+            padding: 12px 20px;
+            margin-bottom: 10px;
+            border: 2px solid #00897B;
+            border-radius: 10px;
+            background-color: #fff;
+            font-family: inherit;
+            color: #004D40;
+            box-shadow: 0 2px 4px rgba(0, 137, 123, 0.15);
+            resize: vertical;
+            box-sizing: border-box;
+        }
+
+        .input-wrapper {
+            display: inline-flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .input-box {
+            width: 160px;
+            font-size: 1em;
+            padding: 10px 40px 10px 15px;
+            margin-bottom: 10px;
+            border: 2px solid #00897B;
+            border-radius: 10px;
+            background-color: #fff;
+            font-family: inherit;
+            color: #004D40;
+            box-shadow: 0 2px 4px rgba(0, 137, 123, 0.15);
+            appearance: none;
+            -moz-appearance: textfield;
+        }
+
+        .input-box::-webkit-inner-spin-button,
+        .input-box::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .arrow-controls {
+            position: absolute;
+            right: 2px;
+            top: 2px;
+            bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .arrow-btn {
+            background: none;
+            border: none;
+            padding: 0;
+            margin: 0;
+            width: 30px;
+            height: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #00897B;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            border-radius: 0;
+            box-shadow: none;
+        }
+
+        .arrow-btn:first-child {
+            border-top-right-radius: 8px;
+        }
+
+        .arrow-btn:last-child {
+            border-bottom-right-radius: 8px;
+        }
+
+        .arrow-btn:hover {
+            background-color: #00897B;
+            color: white;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .arrow-btn:active {
+            background-color: #00695C;
+        }
+
+        .arrow-btn .material-symbols-outlined {
+            font-size: 20px;
+        }
+
+        button {
+            display: block;
+            margin: 40px auto 20px auto;
+            background-color: #00897B;
+            color: white;
+            padding: 12px 40px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            transform: scale(1);
+            font-family: 'Playfair Display', 'Noto Serif JP', serif;
+        }
+
+        button:hover {
+            background-color: #00695C;
+            transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #004D40;
+            margin-top: auto;
+            padding: 20px 0;
+            font-family: 'Noto Serif JP', serif;
+        }
+
+        .footer a {
+            text-decoration: none;
+            color: #004D40;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .main-wrapper {
+                padding-top: 120px;
+            }
+            
+            .container {
+                width: 90%;
+                margin: -20px auto 20px auto;
+                position: relative;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .header img {
+                height: 80px;
+            }
+            
+            .header {
+                padding: 10px 15px;
+            }
+            
+            .footer {
+                margin-top: 20px;
+                padding: 10px 0;
+            }
+        }
+
+        /* SweetAlert2 custom styles */
+        .swal2-popup {
+            font-family: 'Noto Serif JP', serif;
+            border-radius: 12px;
+        }
+
+        .swal2-title {
+            font-family: 'Noto Serif JP', serif;
+            color: #333;
+        }
+
+        .swal2-content {
+            font-family: 'Noto Serif JP', serif;
+            color: #555;
+            line-height: 1.8;
+        }
+
+        .swal2-confirm {
+            background-color: #00897B !important;
+            border-radius: 50px !important;
+            padding: 10px 30px !important;
+            font-weight: bold !important;
+            font-family: 'Playfair Display', 'Noto Serif JP', serif !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .swal2-confirm:hover {
+            background-color: #00695C !important;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="index.html">
+            <img src="logo.png" alt="Logo">
+        </a>
+    </div>
+    <div class="main-wrapper">
+        <div class="container">
+            <h1>縮約作成</h1>
+            <p style="color: #555; font-size: 1em; margin: -20px 0 40px 0; line-height: 1.8;">
+                テキストを目標の縮約率に合わせて縮約します
+            </p>
+            
+            <div class="upload-box">
+                <label>縮約前の元テキスト</label>
+                <textarea class="textarea-box" id="inputText" placeholder="ここにテキストを入力してください" rows="10"></textarea>
+            </div>
+            
+            <div class="upload-box">
+                <label>目標の縮約率（%）</label>
+                <div class="input-wrapper">
+                    <input class="input-box" id="targetRate" type="number" placeholder="例: 50" min="1" max="99" value="50" />
+                    <div class="arrow-controls">
+                        <button class="arrow-btn" id="incrementBtn" type="button">
+                            <span class="material-symbols-outlined">arrow_drop_up</span>
+                        </button>
+                        <button class="arrow-btn" id="decrementBtn" type="button">
+                            <span class="material-symbols-outlined">arrow_drop_down</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="startButton">縮約を開始する</button>
+        </div>
+
+        <div class="footer">
+            &copy; Koichi Akashi & Tetsuhiro Gozu 2025
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                const h1Element = document.querySelector('h1');
+                if (h1Element) {
+                    h1Element.classList.add('underline-animate');
+                }
+            }, 300);
+        });
+
+        // Arrow button functionality
+        const targetRateInput = document.getElementById('targetRate');
+        const incrementBtn = document.getElementById('incrementBtn');
+        const decrementBtn = document.getElementById('decrementBtn');
+        
+        let intervalId = null;
+        let timeoutId = null;
+        
+        function updateValue(delta) {
+            const currentValue = parseInt(targetRateInput.value) || 50;
+            const newValue = currentValue + delta;
+            if (newValue >= 1 && newValue <= 99) {
+                targetRateInput.value = newValue;
+            }
+        }
+        
+        function startRepeating(delta) {
+            updateValue(delta);
+            timeoutId = setTimeout(() => {
+                intervalId = setInterval(() => updateValue(delta), 100);
+            }, 500);
+        }
+        
+        function stopRepeating() {
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+                timeoutId = null;
+            }
+            if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+            }
+        }
+        
+        incrementBtn.addEventListener('mousedown', () => startRepeating(1));
+        incrementBtn.addEventListener('mouseup', stopRepeating);
+        incrementBtn.addEventListener('mouseleave', stopRepeating);
+        incrementBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startRepeating(1);
+        });
+        incrementBtn.addEventListener('touchend', stopRepeating);
+        
+        decrementBtn.addEventListener('mousedown', () => startRepeating(-1));
+        decrementBtn.addEventListener('mouseup', stopRepeating);
+        decrementBtn.addEventListener('mouseleave', stopRepeating);
+        decrementBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startRepeating(-1);
+        });
+        decrementBtn.addEventListener('touchend', stopRepeating);
+
+        document.getElementById('startButton').addEventListener('click', function () {
+            const inputText = document.getElementById('inputText').value.trim();
+            const targetRate = document.getElementById('targetRate').value.trim();
+
+            if (!inputText) {
+                Swal.fire({
+                    title: '',
+                    html: '何でもいいのでテキストを入力してください...',
+                    icon: 'warning',
+                    confirmButtonText: 'OK',
+                    customClass: 'swal-wide'
+                });
+                return;
+            }
+
+            if (inputText.length > 5000) {
+                Swal.fire({
+                    title: '',
+                    html: '文字数はせいぜい5000文字以下にしてください...',
+                    icon: 'warning',
+                    confirmButtonText: 'OK',
+                    customClass: 'swal-wide'
+                });
+                return;
+            }
+
+            if (!targetRate || isNaN(targetRate)) {
+                Swal.fire({
+                    title: '',
+                    html: '目標の縮約率を入力してください...',
+                    icon: 'warning',
+                    confirmButtonText: 'OK',
+                    customClass: 'swal-wide'
+                });
+                return;
+            }
+
+            if (targetRate <= 0 || targetRate >= 100) {
+                Swal.fire({
+                    title: '',
+                    html: '目標の縮約率でそんな値は有り得ないですよ...',
+                    icon: 'warning',
+                    confirmButtonText: 'OK',
+                    customClass: 'swal-wide'
+                });
+                return;
+            }
+
+            sessionStorage.setItem('inputText', inputText);
+            sessionStorage.setItem('targetRate', targetRate);
+
+            window.open('create_int.html', '_blank');
+        });
+    </script>
+</body>
+</html>

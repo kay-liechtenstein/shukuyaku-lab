@@ -4,20 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>縮約ラボ | ホーム</title>
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="縮約ラボ - メニュー">
+    <meta property="og:description" content="テキストを目標の縮約率に合わせて効率的に縮約できるツール">
+    <meta property="og:image" content="logo.png">
+    <meta property="og:url" content="">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="縮約ラボ">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="縮約ラボ - メニュー">
+    <meta name="twitter:description" content="テキストを目標の縮約率に合わせて効率的に縮約できるツール">
+    <meta name="twitter:image" content="logo.png">
+    
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <link rel="icon" href="fav.png" type="image/x-icon">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
             font-family: 'Noto Serif JP', '游明朝', 'Yu Mincho', 'Hiragino Mincho ProN', 'MS P明朝', serif;
-            background-color: #f5fcfc;
+            background: linear-gradient(45deg, #eef7f7 0%, #f5fcfc 50%, #e8f5f5 100%);
             margin: 0;
             padding: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
             min-height: 100vh;
         }
 
@@ -35,228 +45,229 @@
         }
 
         .header img {
-            height: 90px;
+            height: 110px;
             width: auto;
             cursor: pointer;
         }
 
-        .container {
-            width: 80%;
-            max-width: 1500px;
-            margin: 140px auto 60px auto;
-            text-align: center;
-            font-family: 'Noto Serif JP', serif;
+        .main-wrapper {
+            padding-top: 160px;
+            min-height: calc(100vh - 160px);
+            display: flex;
+            flex-direction: column;
         }
 
-        h1 {
-            margin-bottom: 60px;
-            font-size: 2.5em;
-            color: #004D40;
-            font-family: 'Playfair Display', 'Noto Serif JP', serif;
-            display: inline-block;
+        .card-grid {
+            margin: 0 auto 0 auto;
+            display: grid;
+            grid-template-columns: repeat(2, 450px);
+            gap: 80px;
+            width: max-content;
+            justify-content: center;
+            padding: 0 30px;
+            flex: 1;
+            align-items: center;
+        }
+
+        .card {
             position: relative;
-            padding-bottom: 8px;
-        }
-
-        h1::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 3px;
-            background-color: #bfa76f;
-            transition: width 0.6s ease;
-        }
-
-        h1.underline-animate::after {
-            width: 100%;
-        }
-
-        .upload-box {
-            background-color: #fff;
-            border: 2px solid #bfa76f;
+            background: linear-gradient(to bottom right, #fffdfa, #f8fefc);
+            border: 3px solid;
+            border-image: linear-gradient(45deg, #bfa76f, #e8d4a2, #9d8448) 1;
             border-radius: 0px;
-            padding: 20px;
-            margin-bottom: 20px;
-            font-family: 'Noto Serif JP', '游明朝', 'Yu Mincho', 'Hiragino Mincho ProN', 'MS P明朝', serif;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03);
-            transition: border-color 0.2s;
-        }
-
-        .upload-box label {
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+            width: 450px;
+            height: 320px;
+            text-align: center;
             font-weight: bold;
-            display: block;
-            margin-bottom: 10px;
-            font-family: inherit;
-            color: #004D40;
+            font-size: 1.8em;
+            color: #2e3d3a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.35s ease;
+            overflow: hidden;
+            font-family: 'Noto Serif JP', '游明朝', 'Yu Mincho', 'Hiragino Mincho ProN', 'MS P明朝', serif;
         }
 
-        .textarea-box {
-            width: calc(100% - 44px);
-            height: 300px;
-            font-size: 1em;
-            padding: 12px 20px;
-            margin-bottom: 10px;
-            border: 2px solid #00897B;
-            border-radius: 10px;
-            background-color: #fff;
-            font-family: inherit;
-            color: #004D40;
-            box-shadow: 0 2px 4px rgba(0, 137, 123, 0.15);
-            resize: vertical;
-            box-sizing: border-box;
+        .card-emoji {
+            width: 180px;
+            height: 180px;
+            opacity: 0.3;
+            transition: transform 0.35s ease;
+            margin-bottom: 30px;
+            object-fit: contain;
         }
 
-        .input-box {
-            width: 160px;
-            font-size: 1em;
-            padding: 10px 15px;
-            margin-bottom: 10px;
-            border: 2px solid #00897B;
-            border-radius: 10px;
-            background-color: #fff;
-            font-family: inherit;
+        .card-label {
+            font-size: 1.1em;
+            font-weight: bold;
             color: #004D40;
-            box-shadow: 0 2px 4px rgba(0, 137, 123, 0.15);
-            appearance: none;
+            position: relative;
+            z-index: 2;
         }
 
-        button {
-            display: block;
-            margin: 40px auto 20px auto;
-            background-color: #00897B;
-            color: white;
-            padding: 12px 25px;
-            border: none;
-            border-radius: 25px;
-            font-size: 1em;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
-            transform: scale(1);
+        .card-arrow {
+            position: absolute;
+            bottom: 14px;
+            right: 18px;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background-color: #e0d6bd;
+            color: #3e3424;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            transition: background-color 0.3s, color 0.3s;
             font-family: 'Playfair Display', 'Noto Serif JP', serif;
         }
 
-        button:hover {
-            background-color: #00695C;
-            transform: scale(1.05);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        .card:hover {
+            background: #fefdf9;
+            border-color: #d0ae75;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+        }
+
+        .card:hover .card-emoji {
+            transform: scale(1.15);
+        }
+
+        .card:hover .card-arrow {
+            background-color: #d0ae75;
+            color: white;
         }
 
         .footer {
             text-align: center;
             font-size: 0.9rem;
             color: #004D40;
-            margin-top: 30px;
-            padding-bottom: 20px;
+            margin-top: auto;
+            padding: 15px 0;
             font-family: 'Noto Serif JP', serif;
         }
 
-        .footer a {
-            text-decoration: none;
-            color: #004D40;
-            font-weight: bold;
+        /* Responsive styles */
+        @media (max-width: 1050px) {
+            .card-grid {
+                grid-template-columns: repeat(2, 380px);
+                gap: 50px;
+            }
+            
+            .card {
+                width: 380px;
+                height: 280px;
+            }
         }
 
-        @media (max-width: 768px) {
-            .container {
-                margin: 120px 20px 40px 20px;
-                max-width: 100%;
+        @media (max-width: 850px) {
+            .main-wrapper {
+                padding-top: 140px;
+            }
+            
+            .card-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 30px;
+                padding-left: 20px;
+                padding-right: 20px;
+                width: 100%;
+                margin: 40px auto 0 auto;
+            }
+            
+            .card {
+                width: 100%;
+                height: 250px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .main-wrapper {
+                padding-top: 80px;
+                min-height: auto;
+            }
+            
+            .card-grid {
+                display: flex;
+                gap: 15px;
+                margin: 50px auto 0 auto;
+                padding: 0 15px;
+                justify-content: center;
+                align-items: center;
+                box-sizing: border-box;
+                width: 100%;
+            }
+            
+            .card {
+                height: 110px;
+                font-size: 0.9em;
+                padding: 10px 8px;
+                width: 140px;
+                flex-shrink: 0;
+                border-width: 2px;
+            }
+            
+            .card-emoji {
+                width: 70px;
+                height: 70px;
+                margin-bottom: 8px;
+            }
+            
+            .card-label {
+                font-size: 0.7em;
+            }
+            
+            .card-arrow {
+                width: 20px;
+                height: 20px;
+                font-size: 0.7em;
+                bottom: 6px;
+                right: 6px;
+            }
+            
+            .footer {
+                padding: 10px 0;
+                font-size: 0.8rem;
+                margin-top: 20px;
+            }
+            
+            .header img {
+                height: 80px;
+            }
+            
+            .header {
+                padding: 10px 15px;
             }
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <a href="index.html">
+        <a href="#">
             <img src="logo.png" alt="Logo">
         </a>
     </div>
-    <div class="container">
-        <h1>ShukuYaku LAB</h1>
-        
-        <div class="upload-box">
-            <label>縮約前の元テキスト</label>
-            <textarea class="textarea-box" id="inputText" placeholder="ここにテキストを入力してください" rows="10"></textarea>
+
+    <div class="main-wrapper">
+        <div class="card-grid">
+            <a href="create.html" class="card">
+                <img src="create.png" alt="縮約を開始" class="card-emoji">
+                <div class="card-label">縮約を開始</div>
+                <span class="card-arrow">→</span>
+            </a>
+            <a href="checker.html" class="card">
+                <img src="gavel.png" alt="縮約チェッカー" class="card-emoji">
+                <div class="card-label">縮約チェッカー</div>
+                <span class="card-arrow">→</span>
+            </a>
         </div>
-        
-        <div class="upload-box">
-            <label>目標の縮約率（%）</label>
-            <input class="input-box" id="targetRate" type="number" placeholder="例: 50" min="1" max="99" value="50" />
+
+        <div class="footer">
+            &copy; Koichi Akashi & Tetsuhiro Gozu 2025
         </div>
-        
-        <button id="startButton">縮約を開始する</button>
     </div>
-
-    <div class="footer">
-        &copy; Koichi Akashi & Tetsuhiro Gozu 2025
-    </div>
-
-    <script>
-        window.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                const h1Element = document.querySelector('h1');
-                if (h1Element) {
-                    h1Element.classList.add('underline-animate');
-                }
-            }, 300);
-        });
-
-        document.getElementById('startButton').addEventListener('click', function () {
-            const inputText = document.getElementById('inputText').value.trim();
-            const targetRate = document.getElementById('targetRate').value.trim();
-
-            if (!inputText) {
-                Swal.fire({
-                    title: '',
-                    html: '何でもいいのでテキストを入力してください...',
-                    icon: 'warning',
-                    confirmButtonText: 'OK',
-                    customClass: 'swal-wide'
-                });
-                return;
-            }
-
-            if (inputText.length > 5000) {
-                Swal.fire({
-                    title: '',
-                    html: '文字数はせいぜい5000文字以下にしてください...',
-                    icon: 'warning',
-                    confirmButtonText: 'OK',
-                    customClass: 'swal-wide'
-                });
-                return;
-            }
-
-            if (!targetRate || isNaN(targetRate)) {
-                Swal.fire({
-                    title: '',
-                    html: '目標の縮約率を入力してください...',
-                    icon: 'warning',
-                    confirmButtonText: 'OK',
-                    customClass: 'swal-wide'
-                });
-                return;
-            }
-
-            if (targetRate <= 0 || targetRate >= 100) {
-                Swal.fire({
-                    title: '',
-                    html: '目標の縮約率でそんな値は有り得ないですよ...',
-                    icon: 'warning',
-                    confirmButtonText: 'OK',
-                    customClass: 'swal-wide'
-                });
-                return;
-            }
-
-            sessionStorage.setItem('inputText', inputText);
-            sessionStorage.setItem('targetRate', targetRate);
-
-            window.open('operation.html', '_blank');
-        });
-    </script>
 </body>
 </html>

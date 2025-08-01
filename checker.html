@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>縮約ラボ | チェッカー</title>
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="縮約ラボ - 縮約チェッカー">
+    <meta property="og:description" content="文章が正しく縮約されているかを判定します">
+    <meta property="og:image" content="logo.png">
+    <meta property="og:url" content="">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="縮約ラボ">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="縮約ラボ - 縮約チェッカー">
+    <meta name="twitter:description" content="文章が正しく縮約されているかを判定します">
+    <meta name="twitter:image" content="logo.png">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <link rel="icon" href="fav.png" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            font-family: 'Noto Serif JP', '游明朝', 'Yu Mincho', 'Hiragino Mincho ProN', 'MS P明朝', serif;
+            background: linear-gradient(45deg, #eef7f7 0%, #f5fcfc 50%, #e8f5f5 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .header {
+            width: 100%;
+            background-color: #e8f5f5;
+            padding: 15px 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+
+        .header img {
+            height: 110px;
+            width: auto;
+            cursor: pointer;
+        }
+
+        .main-wrapper {
+            padding-top: 160px;
+            min-height: calc(100vh - 160px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            width: 80%;
+            max-width: 1500px;
+            margin: 0 auto 60px auto;
+            text-align: center;
+            font-family: 'Noto Serif JP', serif;
+            flex: 1;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', 'Noto Serif JP', serif;
+            font-size: 2.5em;
+            color: #004D40;
+            margin-bottom: 20px;
+            letter-spacing: 0.02em;
+            display: inline-block;
+            position: relative;
+            padding-bottom: 8px;
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 3px;
+            background: linear-gradient(45deg, #bfa76f, #e8d4a2, #9d8448);
+            transition: width 0.6s ease;
+        }
+
+        h1.underline-animate::after {
+            width: 100%;
+        }
+
+        .subtitle {
+            color: #555;
+            font-size: 1.2em;
+            margin-bottom: 40px;
+            line-height: 1.8;
+        }
+
+        .input-section {
+            background: #fff;
+            border: 4px solid;
+            border-image: linear-gradient(45deg, #bfa76f, #e8d4a2, #9d8448) 1;
+            border-radius: 0px;
+            padding: 40px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03);
+            margin-bottom: 30px;
+        }
+
+        .textarea-container {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #004D40;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+
+        textarea {
+            width: calc(100% - 34px);
+            min-height: 150px;
+            border: 2px solid #00897B;
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 1em;
+            font-family: 'Noto Serif JP', serif;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+            background-color: #fff;
+            color: #004D40;
+            box-shadow: 0 2px 4px rgba(0, 137, 123, 0.15);
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #00695C;
+            box-shadow: 0 0 0 3px rgba(0, 137, 123, 0.1);
+        }
+
+        .shrink-rate {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #e8f5f5;
+            border-radius: 8px;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .shrink-rate.warning {
+            color: #ff6b6b;
+            background-color: #ffe0e0;
+        }
+
+        .shrink-rate.success {
+            color: #4CAF50;
+            background-color: #e8f5e5;
+        }
+
+        .judge-button {
+            background-color: #00897B;
+            color: white;
+            padding: 12px 40px;
+            font-size: 1.1em;
+            font-weight: bold;
+            font-family: 'Playfair Display', 'Noto Serif JP', serif;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .judge-button:hover {
+            background-color: #00695C;
+            transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .judge-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 10px rgba(0, 137, 123, 0.3);
+        }
+
+        .judge-button .material-icons {
+            font-size: 24px;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #004D40;
+            margin-top: auto;
+            padding: 20px 0;
+            font-family: 'Noto Serif JP', serif;
+        }
+
+        .footer-note {
+            background-color: #e8f5f5;
+            padding: 15px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #666;
+            margin: 40px auto 20px auto;
+            max-width: 800px;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .main-wrapper {
+                padding-top: 120px;
+            }
+            
+            .container {
+                width: 90%;
+                margin: -20px auto 20px auto;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .subtitle {
+                font-size: 1em;
+            }
+
+            .input-section {
+                padding: 20px;
+            }
+
+            .judge-button {
+                padding: 12px 30px;
+                font-size: 1em;
+            }
+
+            textarea {
+                min-height: 120px;
+            }
+            
+            .header img {
+                height: 80px;
+            }
+            
+            .header {
+                padding: 10px 15px;
+            }
+            
+            .footer {
+                margin-top: 20px;
+                padding: 10px 0;
+            }
+            
+            .shrink-rate {
+                font-size: 1.2em;
+                padding: 12px;
+            }
+        }
+
+        /* SweetAlert2 カスタムスタイル */
+        .swal2-popup {
+            font-family: 'Noto Serif JP', serif;
+            border-radius: 12px;
+        }
+
+        .swal2-title {
+            font-family: 'Noto Serif JP', serif;
+            color: #333;
+        }
+
+        .swal2-content {
+            font-family: 'Noto Serif JP', serif;
+            color: #555;
+            line-height: 1.8;
+        }
+
+        .swal2-confirm {
+            background-color: #00897B !important;
+            border-radius: 50px !important;
+            padding: 10px 30px !important;
+            font-weight: bold !important;
+            font-family: 'Playfair Display', 'Noto Serif JP', serif !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .swal2-confirm:hover {
+            background-color: #00695C !important;
+            transform: translateY(-2px);
+        }
+
+        /* アニメーション */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .container > * {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="index.html">
+            <img src="logo.png" alt="Logo">
+        </a>
+    </div>
+
+    <div class="main-wrapper">
+        <div class="container">
+            <h1>縮約チェッカー</h1>
+            <p class="subtitle">
+                文章が正しく縮約されているかを判定します
+            </p>
+
+            <div class="input-section">
+                <div class="textarea-container">
+                    <label for="original">縮約前のテキスト</label>
+                    <textarea id="original" placeholder="ここに元のテキストを入力してください（最大5000文字）"></textarea>
+                </div>
+
+                <div class="textarea-container">
+                    <label for="abridged">縮約後のテキスト</label>
+                    <textarea id="abridged" placeholder="ここに縮約後のテキストを入力してください（最大5000文字）"></textarea>
+                </div>
+
+                <div id="shrink-rate" class="shrink-rate">縮約率: 0%</div>
+
+                <div>
+                    <button id="judge-button" class="judge-button">
+                        <span class="material-icons">gavel</span>
+                        判定する
+                    </button>
+                </div>
+            </div>
+
+            <div class="footer-note">
+                縮約が適切に行われていない場合、複数の文字が同時に不適切と判定される場合があります。<br>最初の文字から順に削除・変更<br>するなどして修正してください。
+            </div>
+        </div>
+
+        <div class="footer">
+            &copy; Koichi Akashi & Tetsuhiro Gozu 2025
+        </div>
+    </div>
+
+    <script>
+        // judge.js content integrated here
+        const original_indices = (S, T) => {
+            let Ls = S.length;
+            let Lt = T.length;
+            let ind = [];
+            for (let i = 0; i < Lt; i++) {
+                ind.push(-1);
+            }
+            let track = 0;
+            for (let i = 0; i < Lt; i++) {
+                if (track === Ls) {
+                    break;
+                }
+                if (T[i] === S[track]) {
+                    ind[i] = track;
+                    track++;
+                } else {
+                    let fixed = track;
+                    while (track < Ls) {
+                        flag = false;
+                        if (T[i] === S[track]) {
+                            ind[i] = track;
+                            track++;
+                            flag = true;
+                            break;
+                        }
+                        else {
+                            track++;
+                        }
+                    }
+                    if (track === Ls && flag === false) {
+                        track = fixed;
+                    }
+                }
+            }
+            return ind;
+        }
+
+        document.getElementById('judge-button').addEventListener('click', () => {
+            let S = document.getElementById('original').value;
+            let T = document.getElementById('abridged').value;
+
+            console.log("Original text:", S);
+            console.log("Abridged text:", T);
+
+            if (S.length === 0 || T.length === 0) {
+                Swal.fire({
+                    title: '',
+                    html: "何でもいいので入力してください...",
+                    icon: 'warning',
+                    confirmButtonText: 'OK',
+                    customClass: 'swal-wide'
+                });
+                return;
+            }
+
+            if (S.length > 5000 || T.length > 5000) {
+                Swal.fire({
+                    title: '',
+                    html: "文字数が多すぎます... せいぜい5000文字以下にしてください。",
+                    icon: 'warning',
+                    confirmButtonText: 'OK',
+                    customClass: 'swal-wide'
+                });
+                return;
+            }
+
+            let array = original_indices(S, T);
+
+            let problems = [];
+            for (let i = 0; i < T.length; i++) {
+                if (array[i] == -1) {
+                    problems.push(i + 1);
+                }
+            }
+
+            console.log("Problems:", problems);
+
+            if (!array.includes(-1)) {
+                Swal.fire({
+                    title: '',
+                    text: '正しく縮約されています!',
+                    icon: 'success',
+                    confirmButtonText: 'OK',
+                    customClass: 'swal-wide'
+                });
+            } else {
+                let message = '縮約のルールが守られていません。<br>次の文字には、対応する元テキストの文字が存在しません：<br><br>';
+                for (let i = 0; i < problems.length; i++) {
+                    message += problems[i].toString() + '番目の文字: ' + T[problems[i] - 1] + '<br>';
+                }
+                Swal.fire({
+                    title: '',
+                    html: message,
+                    icon: 'error',
+                    confirmButtonText: 'OK',
+                    customClass: 'swal-wide'
+                });
+            }
+        });
+
+        function updateShrinkRate() {
+            const originalText = document.getElementById('original').value;
+            const abridgedText = document.getElementById('abridged').value;
+            const shrinkRateElement = document.getElementById('shrink-rate');
+            
+            if (originalText.length === 0) {
+                shrinkRateElement.textContent = '現在の縮約率: 0%';
+                shrinkRateElement.className = 'shrink-rate';
+                return;
+            }
+            
+            const shrinkRate = Math.floor(100 * abridgedText.length / originalText.length);
+            shrinkRateElement.textContent = `現在の縮約率: ${shrinkRate}%`;
+
+            if (shrinkRate > 80) {
+                shrinkRateElement.className = 'shrink-rate warning';
+            } else if (shrinkRate < 50) {
+                shrinkRateElement.className = 'shrink-rate success';
+            } else {
+                shrinkRateElement.className = 'shrink-rate';
+            }
+        }
+
+        document.getElementById('original').addEventListener('input', updateShrinkRate);
+        document.getElementById('abridged').addEventListener('input', updateShrinkRate);
+
+        updateShrinkRate();
+
+        // Animation on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                const h1Element = document.querySelector('h1');
+                if (h1Element) {
+                    h1Element.classList.add('underline-animate');
+                }
+            }, 300);
+        });
+    </script>
+</body>
+</html>
