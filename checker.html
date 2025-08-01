@@ -221,6 +221,10 @@
             max-width: 800px;
             border-radius: 10px;
         }
+        
+        .mobile-br {
+            display: none;
+        }
 
         @media (max-width: 768px) {
             .main-wrapper {
@@ -269,6 +273,10 @@
             .shrink-rate {
                 font-size: 1.2em;
                 padding: 12px;
+            }
+            
+            .mobile-br {
+                display: inline;
             }
         }
 
@@ -356,7 +364,7 @@
             </div>
 
             <div class="footer-note">
-                縮約が適切に行われていない場合、複数の文字が同時に不適切と判定される場合があります。<br>最初の文字から順に削除・変更<br>するなどして修正してください。
+                縮約が適切に行われていない場合、複数の文字が同時に不適切と判定される場合があります。<span class="mobile-br"><br></span>最初の文字から順に削除・変更<span class="mobile-br"><br></span>するなどして修正してください。
             </div>
         </div>
 
