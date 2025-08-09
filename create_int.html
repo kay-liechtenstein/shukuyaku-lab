@@ -932,8 +932,8 @@
 
             if (targetRateValue) {
                 const targetRateNum = parseFloat(targetRateValue);
-                const lowerBound = targetRateNum - 5;
-                const upperBound = targetRateNum + 5;
+                const lowerBound = targetRateNum - 3;
+                const upperBound = targetRateNum + 3;
                 const isNowPink = (summaryPercentage >= lowerBound && summaryPercentage <= upperBound);
 
                 if (isNowPink && !prevColorPink) {
