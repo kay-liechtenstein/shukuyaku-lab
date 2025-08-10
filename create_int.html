@@ -339,10 +339,10 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) scale(0);
-            font-size: 100px;
+            font-size: 60px;
             font-weight: 700;
             color: #00ff88;
-            text-shadow: 0 0 30px rgba(0, 255, 136, 0.6), 0 0 60px rgba(0, 255, 136, 0.4);
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.6), 0 0 40px rgba(0, 255, 136, 0.4);
             opacity: 0;
             pointer-events: none;
             z-index: 1001;
@@ -466,12 +466,12 @@
             constructor(x, y) {
                 this.x = x;
                 this.y = y;
-                this.size = Math.random() * 10 + 3;
-                this.speedX = (Math.random() - 0.5) * 25;
-                this.speedY = (Math.random() - 0.5) * 25;
+                this.size = Math.random() * 5 + 2;
+                this.speedX = (Math.random() - 0.5) * 15;
+                this.speedY = (Math.random() - 0.5) * 15;
                 this.color = `hsl(${Math.random() * 60 + 120}, 100%, 50%)`;
                 this.alpha = 1;
-                this.decay = Math.random() * 0.02 + 0.008;
+                this.decay = Math.random() * 0.02 + 0.01;
             }
             
             update() {
@@ -499,7 +499,7 @@
         let particles = [];
 
         function createExplosion(x, y) {
-            for (let i = 0; i < 150; i++) {
+            for (let i = 0; i < 60; i++) {
                 particles.push(new Particle(x, y));
             }
         }
