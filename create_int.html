@@ -58,7 +58,7 @@
             font-size: 2em;
             color: #00897B;
             font-family: 'Playfair Display', serif;
-            margin-top: 180px;
+            margin-top: 160px;
         }
 
         h2#targetRate {
@@ -305,6 +305,10 @@
 
         /* Container layout for tablets and mobile */
         @media (max-width: 1024px) {
+            h2 {
+                margin-top: 140px;
+            }
+            
             .container { 
                 flex-direction: column;
                 width: calc(100% - 30px);
@@ -354,6 +358,13 @@
         @media (min-width: 1025px) {
             .highlightButton {
                 display: none !important;
+            }
+        }
+
+        /* Mobile specific styles */
+        @media (max-width: 600px) {
+            h2 {
+                margin-top: 120px;
             }
             
             .header img {
