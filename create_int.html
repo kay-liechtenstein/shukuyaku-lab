@@ -120,9 +120,28 @@
         
         .touch-char {
             display: inline;
-            position: relative;
             padding: 0;
             margin: 0;
+            line-height: inherit;
+            font-size: inherit;
+            font-family: inherit;
+            letter-spacing: inherit;
+            word-spacing: inherit;
+            vertical-align: baseline;
+            text-rendering: auto;
+            -webkit-font-smoothing: antialiased;
+            font-weight: inherit;
+            font-style: inherit;
+            text-decoration: inherit;
+            white-space: inherit;
+            text-transform: inherit;
+            /* Prevent any box model changes */
+            border: 0;
+            outline: 0;
+            box-shadow: none;
+            position: relative;
+            cursor: pointer;
+            user-select: none;
         }
         
         .touch-char.highlight {
@@ -130,7 +149,17 @@
         }
         
         .touch-char.touch-highlight {
-            background-color: rgba(0, 255, 255, 0.5);
+            background-color: rgba(255, 255, 0, 0.5);
+            animation: flicker 0.3s ease-in-out;
+        }
+
+        /* Flicker animation for touch feedback */
+        @keyframes flicker {
+            0% { opacity: 1; }
+            25% { opacity: 0.6; }
+            50% { opacity: 1; }
+            75% { opacity: 0.8; }
+            100% { opacity: 1; }
         }
         
         /* Smooth highlights for consecutive characters */
@@ -251,15 +280,31 @@
             -moz-user-select: none;
             -ms-user-select: none;
             user-select: none;
+            line-height: 1.6;
+            letter-spacing: normal;
+            word-spacing: normal;
         }
 
         #leftColumn, #highlightedText {
             white-space: pre-wrap;
             font-size: 1em;
             padding: 10px;
+            line-height: 1.6;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
-        @media (max-width: 768px) {
+        /* Prevent layout shift when switching to highlight mode */
+        #leftColumn {
+            box-sizing: border-box;
+            min-height: 100px;
+            position: relative;
+            transform: translateZ(0); /* Force GPU acceleration to prevent reflow */
+            -webkit-transform: translateZ(0);
+        }
+
+        /* Container layout for tablets and mobile */
+        @media (max-width: 1024px) {
             .container { 
                 flex-direction: column;
                 width: calc(100% - 30px);
@@ -283,6 +328,33 @@
             .highlightButton { 
                 display: flex; 
             }
+        }
+
+        /* iPad specific adjustments */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .container {
+                padding: 0 40px;
+                margin: 60px 0;
+            }
+
+            .column {
+                margin: 0 0 30px 0;
+            }
+
+            .highlightButton {
+                padding: 12px 16px;
+            }
+
+            .highlightButton .material-icons {
+                font-size: 28px;
+            }
+        }
+
+        /* Ensure desktop keeps highlight button hidden */
+        @media (min-width: 1025px) {
+            .highlightButton {
+                display: none !important;
+            }
             
             .header img {
                 height: 80px;
@@ -293,6 +365,36 @@
             }
         }
 
+        /* Mobile and tablet specific fixes for character shift */
+        @media (max-width: 1024px) {
+            #leftColumn {
+                /* Ensure consistent text rendering on touch devices */
+                -webkit-text-size-adjust: 100%;
+                text-size-adjust: 100%;
+                -webkit-tap-highlight-color: transparent;
+                /* Prevent any layout shift during DOM manipulation */
+                contain: layout style paint;
+                will-change: contents;
+            }
+
+            .touch-char {
+                /* Force consistent rendering on mobile WebKit */
+                -webkit-text-stroke: 0.01px transparent;
+                backface-visibility: hidden;
+                -webkit-backface-visibility: hidden;
+                transform: translateZ(0);
+                -webkit-transform: translateZ(0);
+            }
+
+            /* Pre-wrapped mode for mobile/tablet to prevent shift */
+            #leftColumn.pre-wrapped .touch-char {
+                pointer-events: none;
+            }
+
+            #leftColumn.highlight-mode .touch-char {
+                pointer-events: auto;
+            }
+        }
 
         .tooltip-container {
             position: relative;
@@ -542,33 +644,52 @@
             targetRateDisplay.textContent = `目標縮約率: ${targetRateValue}%`;
         }
 
-        // ハイライトボタンのクリックイベント
-        highlightButton.addEventListener('click', () => {
-            isHighlightMode = !isHighlightMode;
-            highlightButton.classList.toggle('active');
-            leftColumn.classList.toggle('highlight-mode');
-            
-            if (isHighlightMode) {
-                // タッチモードを有効化
-                leftColumn.style.touchAction = 'none';
-                leftColumn.style.webkitUserSelect = 'none';
-                leftColumn.style.userSelect = 'none';
-                leftColumn.setAttribute('contenteditable', 'false');
+        // Highlight button click event
+        if (highlightButton) {
+            highlightButton.addEventListener('click', () => {
+                isHighlightMode = !isHighlightMode;
+                highlightButton.classList.toggle('active');
+                leftColumn.classList.toggle('highlight-mode');
                 
-                // タッチ用に文字をspanでラップ
-                renderTextForTouch();
-            } else {
-                // タッチモードを無効化
-                leftColumn.style.touchAction = 'auto';
-                leftColumn.style.webkitUserSelect = 'text';
-                leftColumn.style.userSelect = 'text';
-                leftColumn.setAttribute('contenteditable', 'false');
-                touchedChars.clear();
-                
-                // 通常のハイライト表示に戻す
-                renderTextWithHighlights();
-            }
-        });
+                if (isTouchDevice) {
+                    // For touch devices, just toggle the class
+                    if (isHighlightMode) {
+                        leftColumn.classList.remove('pre-wrapped');
+                        leftColumn.style.touchAction = 'none';
+                    } else {
+                        leftColumn.classList.add('pre-wrapped');
+                        leftColumn.style.touchAction = 'auto';
+                        touchedChars.clear();
+                        // Clear temporary highlights
+                        document.querySelectorAll('.touch-char.touch-highlight').forEach(el => {
+                            el.classList.remove('touch-highlight');
+                        });
+                    }
+                } else {
+                    // Desktop behavior remains the same
+                    if (isHighlightMode) {
+                        // Enable touch mode
+                        leftColumn.style.touchAction = 'none';
+                        leftColumn.style.webkitUserSelect = 'none';
+                        leftColumn.style.userSelect = 'none';
+                        leftColumn.setAttribute('contenteditable', 'false');
+                        
+                        // Wrap characters for touch
+                        renderTextForTouch();
+                    } else {
+                        // Disable touch mode
+                        leftColumn.style.touchAction = 'auto';
+                        leftColumn.style.webkitUserSelect = 'text';
+                        leftColumn.style.userSelect = 'text';
+                        leftColumn.setAttribute('contenteditable', 'false');
+                        touchedChars.clear();
+                        
+                        // Return to normal highlight display
+                        renderTextWithHighlights();
+                    }
+                }
+            });
+        }
 
         // タッチイベントの処理
         function getCharIndexFromPoint(x, y) {
@@ -964,9 +1085,18 @@
                 });
         }
 
-        // 初期テキストを表示
+        // Check if device is mobile/tablet for pre-wrapping
+        const isTouchDevice = window.innerWidth <= 1024;
+        
+        // Initial setup with pre-wrapping for touch devices
         if (originalText) {
-            leftColumn.innerText = originalText;
+            if (isTouchDevice) {
+                // Pre-wrap text for touch devices to prevent layout shift
+                renderTextForTouch();
+                leftColumn.classList.add('pre-wrapped');
+            } else {
+                leftColumn.textContent = originalText;
+            }
         } else {
             leftColumn.innerHTML = '<p>テキストがありません。</p>';
         }
