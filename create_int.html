@@ -198,8 +198,47 @@
             border-bottom-right-radius: 3px;
         }
         
-        .output-wrapper { display: flex; justify-content: space-between; align-items: center; }
+        .output-wrapper { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 10px;
+        }
         .output-title { font-size: 1.2em; font-weight: bold; color: #00897B; margin-top: 0; }
+        
+        .char-count {
+            font-size: 1em;
+            color: #ff8c00;
+            font-weight: bold;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            height: 1.3em;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .char-count-number {
+            display: inline-block;
+            position: relative;
+            height: 1.3em;
+            overflow: hidden;
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .digit-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .digit {
+            display: block;
+            height: 1.3em;
+            line-height: 1.3em;
+        }
 
         .downloadButton {
             background-color: #28a745;
@@ -513,6 +552,7 @@
                     <span class="material-icons">edit</span>
                 </button>
             </div>
+            <div class="char-count" id="leftCharCount">文字数：<span id="leftCharCountNumber">0</span>字</div>
             <div id="leftColumn" contenteditable="false">
                 </div>
         </div>
@@ -526,6 +566,7 @@
                     <div class="tooltip-text">クリップボードにコピー</div>
                 </div>
             </div>
+            <div class="char-count" id="rightCharCount">文字数：<span id="rightCharCountNumber">0</span>字</div>
             <div id="highlightedText"></div>
         </div>
     </div>
@@ -799,6 +840,7 @@
                 renderTextForTouch();
                 updateHighlightedText();
                 updateSummaryRate();
+                updateCharCounts();
                 touchedChars.clear();
                 touchStartIndex = -1;
                 touchEndIndex = -1;
@@ -949,6 +991,7 @@
             renderTextWithHighlights();
             updateHighlightedText();
             updateSummaryRate();
+            updateCharCounts();
             selection.removeAllRanges(); // 処理後に選択をクリア
         });
 
@@ -1077,6 +1120,57 @@
             }
         }
 
+        // Animated character count function
+        function animateCharCount(elementId, newCount) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            
+            const currentText = element.textContent;
+            const currentCount = parseInt(currentText) || 0;
+            
+            if (currentCount === newCount) return;
+            
+            // Create animated number transition
+            const duration = 400;
+            const startTime = Date.now();
+            const diff = newCount - currentCount;
+            
+            function updateNumber() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Easing function for smooth animation
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                const current = Math.round(currentCount + diff * easeOut);
+                
+                element.textContent = current;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(updateNumber);
+                } else {
+                    element.textContent = newCount;
+                }
+            }
+            
+            requestAnimationFrame(updateNumber);
+        }
+        
+        // Update character counts
+        function updateCharCounts() {
+            // Left column (original text) character count
+            const leftText = originalText || '';
+            const leftCharCount = leftText.replace(/\s+/g, '').length;
+            animateCharCount('leftCharCountNumber', leftCharCount);
+            
+            // Right column (highlighted text) character count
+            let highlightedText = '';
+            highlightRanges.forEach(hr => {
+                highlightedText += originalTextArray.slice(hr.start, hr.end).join('');
+            });
+            const rightCharCount = highlightedText.replace(/\s+/g, '').length;
+            animateCharCount('rightCharCountNumber', rightCharCount);
+        }
+
         function copyToClipboard() {
             const text = document.getElementById('highlightedText').innerText || document.getElementById('highlightedText').textContent;
             navigator.clipboard.writeText(text)
@@ -1127,6 +1221,7 @@
         // 初期表示と更新
         updateHighlightedText();
         updateSummaryRate();
+        updateCharCounts();
     </script>
 </body>
 </html>
